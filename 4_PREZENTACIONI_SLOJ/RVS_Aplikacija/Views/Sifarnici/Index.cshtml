@@ -1,0 +1,108 @@
+﻿@model List<RVS_Aplikacija.ViewModels.MestoViewModel>
+
+@{
+    ViewData["Title"] = "Mesta";
+}
+
+<div class="container py-4">
+
+    <h3 class="mb-3">Mesta</h3>
+
+    @if (TempData["Uspeh"] != null)
+    {
+        <div class="alert alert-success">@TempData["Uspeh"]</div>
+    }
+
+    @if (TempData["Greska"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Greska"]</div>
+    }
+    @if (!ViewData.ModelState.IsValid)
+    {
+        @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+    }
+    <!-- DODAVANJE -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form asp-action="Dodaj" method="post" class="row g-2">
+
+                <div class="col-md-6">
+                    <input name="Naziv" class="form-control" placeholder="Naziv mesta" />
+                </div>
+
+                <div class="col-md-3">
+                    <input name="Ptt" class="form-control" placeholder="PTT" />
+                </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" type="submit">Dodaj</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="card">
+        <div class="card-body">
+
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Šifra</th>
+                        <th>Naziv</th>
+                        <th>PTT</th>
+                        <th>Akcije</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @foreach (var mesto in Model)
+                    {
+                        <tr>
+
+                            <td>@mesto.Id</td>
+
+                            <td colspan="2">
+                                <form asp-action="Izmeni" method="post" class="d-flex gap-2">
+
+                                    <input type="hidden" name="Id" value="@mesto.Id" />
+
+                                    <input name="Naziv"
+                                           value="@mesto.Naziv"
+                                           class="form-control" />
+
+                                    <input name="Ptt"
+                                           value="@mesto.Ptt"
+                                           class="form-control" />
+
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        Sačuvaj
+                                    </button>
+
+                                </form>
+                            </td>
+
+                            <td>
+                                <form asp-action="Obrisi" method="post">
+                                    <input type="hidden" name="id" value="@mesto.Id" />
+
+                                    <button class="btn btn-danger btn-sm"
+                                            onclick="return confirm('Da li ste sigurni?')">
+                                        Obriši
+                                    </button>
+                                </form>
+                            </td>
+
+                        </tr>
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>

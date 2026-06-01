@@ -1,0 +1,721 @@
+﻿@model List<BibliotekaKlasa.KlasePodataka.ApiPozivi.PoreskaPrijavaOdziv>
+@using BibliotekaKlasa.KlasePodataka.ApiPozivi
+@using System.Globalization
+@using System.Linq
+@using System.Text.RegularExpressions;
+
+@{
+    Layout = null;
+
+    var prijave = Model ?? new List<BibliotekaKlasa.KlasePodataka.ApiPozivi.PoreskaPrijavaOdziv>();
+
+    string Tekst(string? vrednost) => string.IsNullOrWhiteSpace(vrednost) ? "" : vrednost.Trim();
+    string Datum(DateTime? vrednost) => vrednost.HasValue ? vrednost.Value.ToString("dd.MM.yyyy") : "";
+    string Datum2(DateTime vrednost) => vrednost.ToString("dd.MM.yyyy");
+    string Broj(decimal? vrednost) => vrednost.HasValue ? vrednost.Value.ToString("0.##", CultureInfo.InvariantCulture) : "";
+    bool JeOznaceno(short? vrednost, short ocekivano) => vrednost.HasValue && vrednost.Value == ocekivano;
+
+    var prijava = prijave.FirstOrDefault();
+    var poklapanje = Regex.Match(prijava?.ObveznikUlicaBroj ?? "", @"^(.*\D)\s+(\d+[A-Za-zА-Яа-я]?)$");
+
+    var ulica = poklapanje.Success ? poklapanje.Groups[1].Value.Trim() : (prijava?.ObveznikUlicaBroj ?? "");
+    var broj = poklapanje.Success ? poklapanje.Groups[2].Value.Trim() : "";
+}
+
+
+    <style>
+            :root {
+                --plava: #2f5f88;
+                --plava2: #355f86;
+                --linija: #b6d0e5;
+                --svetlo: #f7fbff;
+                --tekst: #111;
+            }
+
+            html, body {
+                background: #fff;
+                color: var(--tekst);
+                font-family: Arial, Helvetica, sans-serif;
+                font-size: 12px;
+                margin: 0;
+                padding: 0;
+            }
+
+            .stranica {
+                width: 250mm;
+                min-height: 297mm;
+                margin: 0 auto;
+                padding: 10mm 12mm 12mm 12mm;
+                box-sizing: border-box;
+                background: #fff;
+            }
+
+            .prekid-stranice {
+                page-break-after: always;
+                break-after: page;
+            }
+
+            .gornji-red {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                margin-bottom: 4mm;
+                font-size: 15px;
+                font-weight: 700;
+            }
+
+                .gornji-red .desno {
+                    text-align: right;
+                }
+
+            .zaglavlje-red {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12mm;
+                align-items: center;
+                margin-bottom: 4mm;
+                font-size: 13px;
+            }
+
+            .linija-za-popunu {
+                display: inline-block;
+                border-bottom: 1px solid #777;
+                min-width: 70mm;
+                height: 4mm;
+                vertical-align: bottom;
+            }
+
+                .linija-za-popunu.kratka {
+                    min-width: 42mm;
+                }
+
+                .linija-za-popunu.srednja {
+                    min-width: 55mm;
+                }
+
+                .linija-za-popunu.duga {
+                    min-width: 82mm;
+                }
+
+            .traka-oznaka {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                border: 2px solid var(--linija);
+                background: #dcebf7;
+                margin-bottom: 2mm;
+            }
+
+                .traka-oznaka div {
+                    padding: 2.5mm 3mm;
+                    font-size: 15px;
+                    border-right: 2px solid var(--linija);
+                }
+
+                    .traka-oznaka div:last-child {
+                        border-right: none;
+                    }
+
+            .glavni-naslov {
+                text-align: center;
+                font-size: 22px;
+                font-weight: 700;
+                margin: 1mm 0 4mm 0;
+                letter-spacing: 0.1px;
+            }
+
+            .naslov-sekcije {
+                background: var(--plava2);
+                color: #fff;
+                font-weight: 700;
+                padding: 2.2mm 3mm;
+                font-size: 16px;
+                margin-top: 4mm;
+                margin-bottom: 0;
+            }
+
+                .naslov-sekcije.mali {
+                    font-size: 15px;
+                }
+
+            table.forma-tabela {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+                margin: 0;
+            }
+
+                table.forma-tabela td, table.forma-tabela th {
+                    border: 1px solid var(--linija);
+                    padding: 1.8mm 2mm;
+                    vertical-align: top;
+                    word-wrap: break-word;
+                    overflow-wrap: anywhere;
+                }
+
+            .oznaka-polje {
+                font-size: 12px;
+            }
+
+            .vrednost-polje {
+                font-size: 12px;
+                min-height: 7mm;
+            }
+
+            .bez-ivice {
+                border: none !important;
+            }
+
+            .podnaslov {
+                font-weight: 700;
+                font-size: 13px;
+            }
+
+            .linija-opcije {
+                display: flex;
+                align-items: center;
+                gap: 2mm;
+                padding: 1.4mm 1mm;
+                font-size: 12px;
+            }
+
+            .kucica {
+                width: 3.2mm;
+                height: 3.2mm;
+                border: 1px solid #666;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 9px;
+                line-height: 1;
+                margin-right: 1mm;
+                flex: 0 0 auto;
+            }
+
+                .kucica.oznacena::after {
+                    content: "✓";
+                    font-size: 9px;
+                    margin-top: -0.2mm;
+                }
+
+            .napomena {
+                font-size: 10.5px;
+                line-height: 1.2;
+                color: #333;
+            }
+
+            .posivljeno {
+                color: #666;
+            }
+
+            .centrirano {
+                text-align: center;
+            }
+
+            .desno {
+                text-align: right;
+            }
+
+            .podebljano {
+                font-weight: 700;
+            }
+
+            .malo {
+                font-size: 10px;
+            }
+
+            .sitno {
+                font-size: 9px;
+            }
+
+            .tabela-nepokretnosti th {
+                background: var(--plava2);
+                color: #fff;
+                font-size: 11px;
+                line-height: 1.05;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            .tabela-nepokretnosti td {
+                font-size: 12px;
+                height: 9mm;
+                vertical-align: middle;
+            }
+
+            .tabela-nepokretnosti .rb {
+                width: 6%;
+                text-align: center;
+            }
+
+            .tabela-nepokretnosti .w-vrsta {
+                width: 6%;
+            }
+
+            .tabela-nepokretnosti .w-adresa {
+                width: 10%;
+            }
+
+            .tabela-nepokretnosti .w-mesto {
+                width: 6%;
+            }
+
+            .tabela-nepokretnosti .w-kat {
+                width: 8%;
+            }
+
+            .tabela-nepokretnosti .w-brparc {
+                width: 5%;
+            }
+
+            .tabela-nepokretnosti .w-ukupna {
+                width: 5%;
+            }
+
+            .tabela-nepokretnosti .w-udeo {
+                width: 5%;
+            }
+
+            .tabela-nepokretnosti .w-korisna {
+                width: 5%;
+            }
+
+            .tabela-nepokretnosti .w-god {
+                width: 7%;
+            }
+
+            .tabela-nepokretnosti .w-kredit {
+                width: 5%;
+            }
+
+            .tabela-nepokretnosti .w-oslob {
+                width: 8%;
+            }
+
+            .okvir-napomena {
+                border: 1px solid var(--linija);
+                border-top: none;
+                padding: 2mm 2.5mm;
+                font-size: 10px;
+                line-height: 1.25;
+            }
+
+            .fiksna-linija {
+                border-bottom: 1px solid #888;
+                min-height: 6mm;
+            }
+
+            .legenda-dole {
+                margin-top: 2mm;
+                font-size: 10px;
+                line-height: 1.15;
+                color: #444;
+            }
+
+            .mreza-potpisa {
+                display: grid;
+                grid-template-columns: 1.1fr 1.1fr 1.3fr 1fr 1.5fr;
+                border: 1px solid var(--linija);
+                border-top: none;
+            }
+
+                .mreza-potpisa > div {
+                    border-right: 1px solid var(--linija);
+                    padding: 2mm 2mm;
+                    min-height: 9mm;
+                }
+
+                    .mreza-potpisa > div:last-child {
+                        border-right: none;
+                    }
+
+            .izbor-potpisnika {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                border: 1px solid var(--linija);
+                border-bottom: none;
+            }
+
+                .izbor-potpisnika > div {
+                    border-right: 1px solid var(--linija);
+                    padding: 2mm 2mm;
+                }
+
+                    .izbor-potpisnika > div:last-child {
+                        border-right: none;
+                    }
+
+            .mreza-pripreme {
+                display: grid;
+                grid-template-columns: 1.1fr 1.1fr 1fr;
+                border: 1px solid var(--linija);
+                border-top: none;
+            }
+
+                .mreza-pripreme > div {
+                    border-right: 1px solid var(--linija);
+                    padding: 2mm 2mm;
+                    min-height: 8mm;
+                }
+
+                    .mreza-pripreme > div:last-child {
+                        border-right: none;
+                    }
+
+            .mreza-pripreme-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1.2fr;
+                border: 1px solid var(--linija);
+                border-top: none;
+            }
+
+                .mreza-pripreme-2 > div {
+                    border-right: 1px solid var(--linija);
+                    padding: 2mm 2mm;
+                    min-height: 8mm;
+                }
+
+                    .mreza-pripreme-2 > div:last-child {
+                        border-right: none;
+                    }
+
+            .linija-legende {
+                border-top: 1px solid #c7d9ea;
+                margin-top: 2mm;
+                padding-top: 2mm;
+                font-size: 10px;
+                line-height: 1.2;
+                color: #444;
+            }
+
+            @@media print {
+                @@page {
+                    size: A4;
+                    margin: 0;
+                }
+
+                body {
+                    margin: 0;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
+                }
+
+                .stranica {
+                    width: 210mm;
+                    min-height: 297mm;
+                    margin: 0;
+                    padding: 10mm 12mm 12mm 12mm;
+                    page-break-after: always;
+                    break-after: page;
+                }
+
+                .ne-štampaj {
+                    display: none !important;
+                }
+            }
+    </style>
+
+
+    <div class="stranica prekid-stranice">
+        <div class="gornji-red">
+            <div>REPUBLIKA SRBIJA</div>
+            <div class="desno">Korigovan Obrazac PPI-2</div>
+        </div>
+
+        <div class="zaglavlje-red">
+            <div>Jedinica lokalne samouprave: <span class="linija-za-popunu duga">@Tekst(prijava?.JlsNaziv)</span></div>
+            <div class="desno">Organizaciona jedinica: <span class="linija-za-popunu srednja">@Tekst(prijava?.OrganizacionaJedinica)</span></div>
+        </div>
+
+        <div class="traka-oznaka">
+            <div>
+                <span class="kucica @(prijava != null && !prijava.JeIzmenjena ? "oznacena" : "")"></span>
+                PORESKA PRIJAVA
+            </div>
+            <div>
+                <span class="kucica @(prijava != null && prijava.JeIzmenjena ? "oznacena" : "")"></span>
+                IZMENJENA PORESKA PRIJAVA
+            </div>
+        </div>
+
+        <div class="glavni-naslov">PORESKA PRIJAVA ZA UTVRĐIVANJE POREZA NA IMOVINU</div>
+
+        <div class="naslov-sekcije">MASTER — 1. PODACI O PORESKOM OBVEZNIKU</div>
+        <table class="forma-tabela">
+            <colgroup>
+                <col style="width:34%">
+                <col style="width:66%">
+            </colgroup>
+            <tr>
+                <td class="oznaka-polje">1.1. Poslovno ime, odnosno ime i prezime</td>
+                <td class="vrednost-polje">@Tekst(prijava?.ObveznikLiceNaziv)</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.2. Poreski identifikacioni broj (PIB/JMBG/EBS)</td>
+                <td class="vrednost-polje">
+                    @(prijava != null ? (!string.IsNullOrWhiteSpace(prijava.PIB) ? Tekst(prijava.PIB) : Tekst(prijava.JMBG)) : "")
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.3. Matični broj</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.JMBG) : "")</td>
+            </tr>
+        </table>
+
+        <table class="forma-tabela" style="border-top:none;">
+            <colgroup>
+                <col style="width:26%">
+                <col style="width:24%">
+                <col style="width:26%">
+                <col style="width:24%">
+            </colgroup>
+            <tr>
+                <td colspan="4" class="podnaslov">1.4. Podaci o sedištu/prebivalištu-boravištu:</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.4.1. Grad, odnosno opština</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.ObveznikMesto) : "")</td>
+                <td class="oznaka-polje">1.4.2. Mesto</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.ObveznikMesto) : "")</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.4.3. Naziv ulice</td>
+                <td class="vrednost-polje">@ulica</td>
+                <td class="oznaka-polje">1.4.4. Kućni broj (broj i slovo)</td>
+                <td class="vrednost-polje">@broj</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.4.5. Sprat, broj posebnog dela i slovo</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.ObveznikStan) : "")</td>
+                <td class="oznaka-polje">1.4.6. Broj telefona</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.Telefon) : "")</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">1.4.7. E-mail</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.Email) : "")</td>
+                <td class="oznaka-polje"></td>
+                <td class="vrednost-polje"></td>
+            </tr>
+        </table>
+
+        <div class="naslov-sekcije">2. PRAVO, KORIŠĆENJE ILI DRŽAVINA OBVEZNIKA</div>
+        <table class="forma-tabela">
+            <colgroup>
+                <col style="width:100%">
+            </colgroup>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 1) ? "oznacena" : "")"></span>2.1. Imalac prava svojine, odnosno prava svojine na zemljištu površine preko 10 ari</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 2) ? "oznacena" : "")"></span>2.2. Fizičko lice - imalac prava zakupa (neprofitne zakupnine) ili prava korišćenja, za period &gt; 1 god.</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 3) ? "oznacena" : "")"></span>2.3. Imalac prava korišćenja građevinskog zemljišta površine preko 10 ari</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 4) ? "oznacena" : "")"></span>2.4. Držalac nepokretnosti na kojoj imalac prava svojine nije poznat ili nije određen</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 5) ? "oznacena" : "")"></span>2.5. Držalac nepokretnosti u javnoj svojini bez pravnog osnova</div>
+                </td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">
+                    <div class="linija-opcije"><span class="kucica @(JeOznaceno(prijava?.VrstaPravaId, 6) ? "oznacena" : "")"></span>2.6. Primalac finansijskog lizinga</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="naslov-sekcije">POPOPIS NEPOKRETNOSTI KOJE SE PRIJAVLJUJU</div>
+        <div class="centrirano" style="padding: 2mm 0 2mm 0; font-size: 12px;">Popunite po jedan red za svaku nepokretnost.</div>
+
+        <table class="forma-tabela tabela-nepokretnosti">
+            <colgroup>
+                <col class="rb">
+                <col class="w-vrsta">
+                <col class="w-adresa">
+                <col class="w-mesto">
+                <col class="w-kat">
+                <col class="w-brparc">
+                <col class="w-ukupna">
+                <col class="w-udeo">
+                <col class="w-korisna">
+                <col class="w-god">
+                <col class="w-kredit">
+                <col class="w-oslob">
+            </colgroup>
+            <thead>
+                <tr>
+                    <th>Br.</th>
+                    <th>Vrsta nepokr. (3.1-3.8)</th>
+                    <th>Adresa</th>
+                    <th>Mesto</th>
+                    <th>Kat. opština</th>
+                    <th>Br. katastarske parcele</th>
+                    <th>Ukupna površina (m²)</th>
+                    <th>Udeo obveznika</th>
+                    <th>Korisna površina (m²)</th>
+                    <th>God. izgradnje / posl. rekonstr.</th>
+                    <th>Poreski kredit (da/ne)</th>
+                    <th>Napomena / Por. oslobođenje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var nepokretnosti = prijava?.Nepokretnosti?.OrderBy(x => x.Rbr).ToList() ?? new List<NepokretnostOdziv>();
+                    var redova = 8;
+                    for (int i = 0; i < redova; i++)
+                    {
+                        var nepokretnost = i < nepokretnosti.Count ? nepokretnosti[i] : null;
+                        <tr>
+                            <td class="centrirano">@(i + 1)</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.SifraVrste) : "")</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.UlicaIbroj) : "")</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.KatastarskaOpstinaNaziv) : "")</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.KatastarskaOpstinaNaziv) : "")</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.BrKatParcele) : "")</td>
+                            <td class="desno">@(nepokretnost != null ? Broj(nepokretnost.UkupnaPovrsina) : "")</td>
+                            <td class="centrirano">@(nepokretnost != null ? Broj(nepokretnost.UdeoObveznika) : "")</td>
+                            <td class="desno">@(nepokretnost != null ? Broj(nepokretnost.KorisnaPovrsina) : "")</td>
+                            <td class="centrirano">@(nepokretnost != null ? Broj(nepokretnost.GodinaIzgradnje) : "")</td>
+                            <td class="centrirano">@(nepokretnost != null ? (nepokretnost.ImaPoreskiKredit == true ? "da" : (nepokretnost.ImaPoreskiKredit == false ? "ne" : "")) : "")</td>
+                            <td>@(nepokretnost != null ? Tekst(nepokretnost.Napomena) : "") @(nepokretnost != null && nepokretnost.ImaPoreskoOslobodjenje == true ? " / OSLOBODJENJE" : "")</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <div class="okvir-napomena">
+            <div>Vrsta nepokretnosti: 3.1=Građevinsko zemljište 3.2=Poljoprivr. zemljište 3.3=Šumsko zemljište 3.4=Drugo zemljište 3.5=Stan 3.6=Kuća za stanovanje 3.7=Poslovna zgrada 3.8=Garaža/pomoćni objekat</div>
+        </div>
+
+        <div class="naslov-sekcije">3. DODATNI PODACI I NAPOMENE</div>
+
+        <table class="forma-tabela" style="border-top:none;">
+            <colgroup>
+                <col style="width:26%">
+                <col style="width:24%">
+                <col style="width:12%">
+                <col style="width:12%">
+                <col style="width:10%">
+                <col style="width:8%">
+                <col style="width:8%">
+            </colgroup>
+            <tr>
+                <td class="oznaka-polje">5. Dan nastanka poreske obaveze</td>
+                <td class="vrednost-polje">@Datum(prijava?.DanNastankaPoreskeObaveze)</td>
+                <td class="oznaka-polje">8. Dan prestanka por. obaveze</td>
+                <td class="vrednost-polje">@Datum(prijava?.DanPrestankaPoreskeObaveze)</td>
+                <td class="oznaka-polje" colspan="2">Osnov</td>
+                <td class="vrednost-polje">@(prijava != null ? Tekst(prijava.PpKreditOsnov) : "")%</td>
+            </tr>
+            <tr>
+                <td class="oznaka-polje">7.2. Poreski kredit (umanjenje utvrđenog poreza)</td>
+                <td class="vrednost-polje">
+                    <span class="kucica @(prijava?.PpImaPoreskiKredit == true ? "oznacena" : "")"></span> da
+                    &nbsp;&nbsp;&nbsp;
+                    <span class="kucica @(prijava?.PpImaPoreskiKredit == false ? "oznacena" : "")"></span> ne
+                </td>
+                <td class="oznaka-polje">7.3. Poresko oslobođenje</td>
+                <td class="vrednost-polje">
+                    <span class="kucica @(prijava?.PpImaPoreskoOslobodjenje == true ? "oznacena" : "")"></span> da
+                    &nbsp;&nbsp;&nbsp;
+                    <span class="kucica @(prijava?.PpImaPoreskoOslobodjenje == false ? "oznacena" : "")"></span> ne
+                </td>
+                <td class="oznaka-polje" colspan="2">Osnova oslobođenja</td>
+                <td class="vrednost-polje">@Tekst(prijava?.PpOslobodjenjeOsnov)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="stranica">
+        <div class="naslov-sekcije">9. POPIS PRILOŽENIH DOKAZA:</div>
+        <table class="forma-tabela" style="border-top:none;">
+            <tr>
+                <td style="height:10mm;">@Tekst(prijava?.PopisPrilozenihDokaza)</td>
+            </tr>
+            <tr><td style="height:10mm;"></td></tr>
+            <tr><td style="height:10mm;"></td></tr>
+            <tr><td style="height:10mm;"></td></tr>
+        </table>
+
+        <div class="naslov-sekcije">10. NAPOMENA:</div>
+        <table class="forma-tabela" style="border-top:none;">
+            <tr>
+                <td style="height:10mm;">@Tekst(prijava?.PpNapomena)</td>
+            </tr>
+            <tr><td style="height:10mm;"></td></tr>
+            <tr><td style="height:10mm;"></td></tr>
+        </table>
+
+        <div class="naslov-sekcije">PRIJAVU PRIPREMIO</div>
+
+        <div class="izbor-potpisnika">
+            <div><span class="kucica oznacena"></span> Poreski obveznik</div>
+            <div><span class="kucica"></span> Poreski punomoćnik</div>
+            <div><span class="kucica"></span> Poreski savetnik</div>
+        </div>
+        <div class="izbor-potpisnika" style="border-top:none;">
+            <div><span class="kucica"></span> Zakonski zastupnik obveznika</div>
+            <div><span class="kucica"></span> Zastupnik po službenoj dužnosti</div>
+            <div></div>
+        </div>
+
+        <div class="mreza-pripreme">
+            <div>
+                PIB/JMBG/EBS podnosioca prijave:<br />
+                <span class="linija-za-popunu kratka" style="min-width:100%;">
+                    @(prijava != null ? (!string.IsNullOrWhiteSpace(prijava.PIB) ? Tekst(prijava.PIB) : Tekst(prijava.JMBG)) : "")
+                </span>
+            </div>
+            <div>
+                Adresa podnosioca:<br />
+                <span class="linija-za-popunu kratka" style="min-width:100%;">@(prijava != null ? Tekst(prijava.ObveznikUlicaBroj) : "")</span>
+            </div>
+            <div>
+                Poslovno ime/prezime podnosioca prijave:<br />
+                <span class="linija-za-popunu kratka" style="min-width:100%;">@(prijava != null ? Tekst(prijava.ObveznikLiceNaziv) : "")</span>
+            </div>
+        </div>
+
+        <div class="mreza-pripreme-2" style="border-top:none;">
+            <div>
+                Mesto:<br />
+                <span class="linija-za-popunu kratka" style="min-width:100%;">@(prijava != null ? Tekst(prijava.ObveznikMesto) : "")</span>
+            </div>
+            <div>
+                Datum:<br />
+                <span class="linija-za-popunu kratka" style="min-width:100%;">@(prijava != null ? Datum(prijava.DatumPodnosenja) : "")</span>
+            </div>
+            <div colspan="2">
+                Potpis podnosioca prijave:<br />
+                <span class="d-inline-block w-100 border-bottom border-dark pb-1 fst-italic">
+                    @(prijava != null ? Tekst(prijava.ObveznikLiceNaziv) : "")
+                </span>
+            </div>
+            <div></div>
+        </div>
+
+        <div class="linija-legende">
+            <div>1 — Podnosilac označava da li podnosi poresku prijavu ili izmenjenu poresku prijavu.</div>
+            <div>2 — Zaokružuje se broj ispred odgovarajuće vrste nepokretnosti za koju se podnosi prijava.</div>
+            <div>5 — Popunjava se samo kad se prijava podnosi za udeo u nepokretnosti.</div>
+            <div>6 — Korisna površina: za zemljište = ukupna površina; za objekat = zbir podnih površina unutrašnjih strana obodnih zidova.</div>
+            <div>7 — Poreski kredit: umanjenje poreza za 50% (maks. 20.000 din.) na kući/stanu u kom obveznik stanuje i ima prijavljeno prebivalište.</div>
+            <div>8 — Upisuje se član, stav i tačka Zakona — osnov za poresko oslobođenje.</div>
+            <div>10 — Upisuje se br. 1=prestanak prava; 2=prestanak postojanja nepokretnosti; 3=početak primene novog zakona; 4=drugo lice steklo pravo.</div>
+        </div>
+    </div>
+
+    <div class="ne-štampaj" style="position:fixed; right:16px; bottom:16px; display:flex; gap:8px; z-index:9999;">
+        <button class="btn btn-primary btn-sm" onclick="window.print()">Štampaj</button>
+    </div>

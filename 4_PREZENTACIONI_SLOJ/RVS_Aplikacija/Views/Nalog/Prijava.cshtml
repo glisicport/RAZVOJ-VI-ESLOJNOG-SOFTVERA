@@ -1,0 +1,72 @@
+﻿@model RVS_Aplikacija.ViewModels.PrijavaViewModel
+
+@{
+    Layout = "PrijavaLayout";
+}
+
+
+<div class="drzavno-prijava-stranica d-flex align-items-center justify-content-center p-3">
+    <div class="card shadow-lg drzavno-prijava-kartica border-0">
+        <div class="row g-0">
+
+            <div class="col-md-5 drzavno-prijava-left d-flex flex-column align-items-center justify-content-center p-5 text-center">
+                <img src="/Slike/GrbSrbije.webp" class="mb-3" style="width: 80px;" />
+                <h4 class="fw-bold text-white">Poreska uprava</h4>
+                <p class="opacity-75 small">e-Poreski sistem Republike Srbije</p>
+
+                <a href="/" class="btn btn-outline-light btn-sm mt-3 px-4">
+                    <i class="bi bi-arrow-left"></i> Nazad
+                </a>
+            </div>
+
+            <div class="col-md-7 p-4 p-md-5 bg-white d-flex flex-column justify-content-center">
+
+                <div class="mb-4">
+                    <h4 class="fw-bold text-dark">Prijava</h4>
+                    <p class="text-muted mb-0 small">e-Poreski sistem Republike Srbije</p>
+                </div>
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <form asp-action="Prijava" method="post">
+
+                    <div class="form-floating mb-2">
+                        <input asp-for="Email"
+                               class="form-control rounded-3 shadow-sm"
+                               placeholder="name@example.com" />
+                        <label asp-for="Email">
+                            <i class="bi bi-envelope me-2"></i>Email adresa
+                        </label>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="form-floating mb-2">
+                        <input asp-for="Sifra"
+                               class="form-control rounded-3 shadow-sm"
+                               placeholder="Password" />
+                        <label asp-for="Sifra">
+                            <i class="bi bi-lock me-2"></i>Lozinka
+                        </label>
+                        <span asp-validation-for="Sifra" class="text-danger small"></span>
+                    </div>
+
+                    <button type="submit"
+                            class="btn drzavno-btn text-white w-100 py-2 shadow-sm rounded-3">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                        Prijavi se
+                    </button>
+
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Zaštićen državni sistem • svi podaci su enkriptovani
+                        </small>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

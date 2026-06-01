@@ -1,0 +1,233 @@
+
+CREATE PROCEDURE [dbo].[sp_nepokretnost_insert]
+(
+    @id UNIQUEIDENTIFIER,
+    @prijava_id UNIQUEIDENTIFIER,
+
+    @vrsta_id NVARCHAR(50),
+    @rbr INT,
+
+    @katastarska_opstina_id UNIQUEIDENTIFIER,
+    @UlicaIbroj nvarchar(255),
+
+    @br_kat_parcele NVARCHAR(100) = NULL,
+    @godina_izgradnje INT = NULL,
+
+    @korisna_povrsina DECIMAL(18,2),
+    @ukupna_povrsina DECIMAL(18,2),
+    @udeo_obveznika DECIMAL(18,2),
+
+    @ima_poreski_kredit BIT,
+    @ima_poresko_oslobodjenje BIT,
+    @oslobodjenje_osnov DECIMAL(18,2) = NULL,
+
+    @napomena NVARCHAR(MAX) = NULL
+)
+AS
+BEGIN
+    INSERT INTO nepokretnost
+    (
+        id,
+        UlicaIbroj,
+        prijava_id,
+        vrsta_id,
+        rbr,
+        katastarska_opstina_id,
+        br_kat_parcele,
+        godina_izgradnje,
+        korisna_povrsina,
+        ukupna_povrsina,
+        udeo_obveznika,
+        ima_poreski_kredit,
+        ima_poresko_oslobodjenje,
+        oslobodjenje_osnov,
+        napomena
+    )
+    VALUES
+    (
+        @id,
+        @UlicaIbroj,
+        @prijava_id,
+        @vrsta_id,
+        @rbr,
+        @katastarska_opstina_id,
+        
+        @br_kat_parcele,
+        @godina_izgradnje,
+        @korisna_povrsina,
+        @ukupna_povrsina,
+        @udeo_obveznika,
+        @ima_poreski_kredit,
+        @ima_poresko_oslobodjenje,
+        @oslobodjenje_osnov,
+        @napomena
+    );
+END
+
+GO
+
+CREATE PROCEDURE [dbo].[sp_poreska_prijava_detaljno]
+    @KorisnikId UNIQUEIDENTIFIER,
+    @PrijavaId UNIQUEIDENTIFIER = NULL
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @LiceId UNIQUEIDENTIFIER;
+
+    SELECT @LiceId = LiceID
+    FROM Korisnik
+    WHERE id = @KorisnikId;
+
+    SELECT 
+        pp.id,
+
+        pp.obveznik_lice_id,
+        COALESCE(NULLIF(CONCAT(l_obv.ime, ' ', l_obv.prezime), ' '), l_obv.naziv) AS obveznik_lice_naziv,
+
+        pp.podnosilac_lice_id,
+        COALESCE(NULLIF(CONCAT(l_pod.ime, ' ', l_pod.prezime), ' '), l_pod.naziv) AS podnosilac_lice_naziv,
+
+        pp.je_izmenjena,
+        CONCAT(vp.sifra, ' - ', vp.naziv) AS vrsta_prava_naziv,
+        jls.naziv AS jls_naziv,
+
+        pp.datum_podnosenja,
+        pp.kredit_osnov,
+        pp.oslobodjenje_osnov,
+        pp.OrganizacionaJedinica,
+
+        (
+            SELECT 
+                n.id,
+                n.prijava_id,
+                n.vrsta_id,
+                n.rbr,
+                n.ulicaIbroj,
+                n.korisna_povrsina,
+                n.ukupna_povrsina,
+                n.udeo_obveznika,
+                n.ima_poresko_oslobodjenje,
+                n.oslobodjenje_osnov
+            FROM Nepokretnost n
+            WHERE n.prijava_id = pp.id
+            FOR JSON PATH
+        ) AS nepokretnosti_json
+
+    FROM poreska_prijava pp
+    LEFT JOIN Lice l_obv ON l_obv.id = pp.obveznik_lice_id
+    LEFT JOIN Lice l_pod ON l_pod.id = pp.podnosilac_lice_id
+    LEFT JOIN vrsta_prava vp ON vp.id = pp.vrsta_prava_id
+    LEFT JOIN jls ON jls.id = pp.jls_id
+
+    WHERE 
+        (
+            pp.obveznik_lice_id = @LiceId
+            OR pp.podnosilac_lice_id = @LiceId
+        )
+        AND (@PrijavaId IS NULL OR pp.id = @PrijavaId);
+END
+
+
+CREATE PROCEDURE [dbo].[sp_poreska_prijava_insert]
+(
+    @id UNIQUEIDENTIFIER,
+
+    -- SADA ŠALJEŠ KORISNIK ID, NE LICE ID
+    @obveznik_korisnik_id UNIQUEIDENTIFIER,
+    @podnosilac_korisnik_id UNIQUEIDENTIFIER = NULL,
+
+    @je_izmenjena BIT,
+    @OrganizacionaJedinica NVARCHAR(255),
+
+    @vrsta_prava_id SMALLINT,
+    @jls_id UNIQUEIDENTIFIER,
+
+    @dan_nastanka_poreske_obaveze DATE,
+    @dan_prestanka_poreske_obaveze DATE,
+
+
+    @razlog_prestanka_id SMALLINT = NULL,
+
+    @ima_poreski_kredit BIT,
+    @kredit_osnov DECIMAL(18,2) = NULL,
+
+    @ima_poresko_oslobodjenje BIT,
+    @oslobodjenje_osnov DECIMAL(18,2) = NULL,
+    @poresko_umanjenje DECIMAL(18,0) = 0,
+
+    @datum_podnosenja DATE,
+
+    @napomena NVARCHAR(MAX) = NULL,
+
+    @kreirana_u DATETIME = NULL,
+    @azurirana_u DATETIME = NULL,
+
+    @popis_prilozenih_dokaza NVARCHAR(MAX) = NULL
+)
+AS
+BEGIN
+
+    DECLARE @obveznik_lice_id UNIQUEIDENTIFIER;
+    DECLARE @podnosilac_lice_id UNIQUEIDENTIFIER;
+
+    -- MAPIRANJE KORISNIK -> LICE
+    SELECT @obveznik_lice_id = LiceID
+    FROM korisnik
+    WHERE id = @obveznik_korisnik_id;
+
+    IF @podnosilac_korisnik_id IS NOT NULL
+    BEGIN
+        SELECT @podnosilac_lice_id = LiceID
+        FROM korisnik
+        WHERE id = @podnosilac_korisnik_id;
+    END
+
+    INSERT INTO poreska_prijava
+    (
+        id,
+        OrganizacionaJedinica,
+        obveznik_lice_id,
+        podnosilac_lice_id,
+        je_izmenjena,
+        vrsta_prava_id,
+        jls_id,
+        dan_nastanka_poreske_obaveze,
+        dan_prestanka_poreske_obaveze,
+        razlog_prestanka_id,
+        ima_poreski_kredit,
+        kredit_osnov,
+        ima_poresko_oslobodjenje,
+        oslobodjenje_osnov,
+        datum_podnosenja,
+        napomena,
+        kreirana_u,
+        azurirana_u,
+        popis_prilozenih_dokaza,
+        poresko_umanjenje
+    )
+    VALUES
+    (
+        @id,
+        @OrganizacionaJedinica,
+        @obveznik_lice_id,
+        @podnosilac_lice_id,
+        @je_izmenjena,
+        @vrsta_prava_id,
+        @jls_id,
+        @dan_nastanka_poreske_obaveze,
+        @dan_prestanka_poreske_obaveze,
+        @razlog_prestanka_id,
+        @ima_poreski_kredit,
+        @kredit_osnov,
+        @ima_poresko_oslobodjenje,
+        @oslobodjenje_osnov,
+        @datum_podnosenja,
+        @napomena,
+        @kreirana_u,
+        @azurirana_u,
+        @popis_prilozenih_dokaza,
+        @poresko_umanjenje
+    );
+
+

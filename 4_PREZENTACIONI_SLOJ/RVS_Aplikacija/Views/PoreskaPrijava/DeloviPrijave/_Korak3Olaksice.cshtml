@@ -1,0 +1,687 @@
+﻿@model RVS_Aplikacija.ViewModels.PoreskaPrijavaViewModel
+
+@{
+    var koLista = ViewBag.Ko as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+}
+
+<style>
+    .objekti-shell {
+        border: 1px solid #d9e2ec;
+        border-radius: 1rem;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 0.5rem 1.25rem rgba(11, 61, 110, .08);
+    }
+
+    .objekti-shell-header {
+        background: linear-gradient(135deg, #0b3d6e, #082c50);
+        color: #fff;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .objekti-shell-naslov {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .objekti-shell-podnaslov {
+        margin: 0;
+        font-size: .85rem;
+        opacity: .85;
+    }
+
+    .objekti-layout {
+        display: grid;
+        grid-template-columns: minmax(290px, 320px) minmax(0, 1fr);
+        min-height: 680px;
+    }
+
+    .objekti-traka {
+        border-right: 1px solid #e5edf5;
+        background: #f8fafc;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .objekti-traka-top {
+        padding: 1rem;
+        border-bottom: 1px solid #e5edf5;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: #f8fafc;
+    }
+
+    .objekti-lista {
+        padding: .75rem;
+        overflow-y: auto;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .objekat-jedinica {
+        border: 1px solid #d9e2ec;
+        background: #fff;
+        border-radius: .85rem;
+        padding: .85rem .9rem;
+        margin-bottom: .75rem;
+        cursor: pointer;
+        transition: .15s ease-in-out;
+    }
+
+        .objekat-jedinica:hover {
+            border-color: #0b3d6e;
+            box-shadow: 0 0.25rem 0.75rem rgba(11, 61, 110, .08);
+            transform: translateY(-1px);
+        }
+
+        .objekat-jedinica.active {
+            border-color: #0b3d6e;
+            background: #eef5ff;
+            box-shadow: 0 0.25rem 0.75rem rgba(11, 61, 110, .12);
+        }
+
+        .objekat-jedinica.invalidan {
+            border-color: #dc3545;
+            background: #fff5f6;
+        }
+
+    .objekat-jedinica-naslov {
+        font-weight: 600;
+        color: #19324a;
+        font-size: .95rem;
+        margin-bottom: .25rem;
+    }
+
+    .objekat-jedinica-meta {
+        font-size: .8rem;
+        color: #6c7a89;
+        line-height: 1.35;
+        word-break: break-word;
+    }
+
+    .objekti-main {
+        padding: 1rem 1.15rem;
+        min-width: 0;
+    }
+
+    .sekcija-podnaslov {
+        font-size: .82rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: .85rem;
+        padding-bottom: .45rem;
+        border-bottom: 1px solid #e5edf5;
+    }
+
+    .form-label.smallish {
+        font-size: .85rem;
+        color: #19324a;
+        margin-bottom: .35rem;
+        font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: .75rem;
+    }
+
+    .hint-text {
+        font-size: .78rem;
+        color: #6c7a89;
+        margin-top: .25rem;
+    }
+
+    .mini-badge {
+        font-size: .72rem;
+        padding: .25rem .5rem;
+        border-radius: 999px;
+        background: #eaf2ff;
+        color: #0b3d6e;
+        font-weight: 600;
+    }
+
+        .mini-badge.invalid {
+            background: #ffe7ea;
+            color: #b02a37;
+        }
+
+    .sticky-actions {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #fff;
+        padding-bottom: .75rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e5edf5;
+    }
+
+    .empty-state {
+        padding: 1rem;
+        border: 1px dashed #cbd5e1;
+        border-radius: .85rem;
+        background: #fbfcfe;
+        color: #64748b;
+        font-size: .9rem;
+    }
+
+    .field-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 .15rem rgba(220, 53, 69, .12);
+    }
+
+    .field-valid {
+        border-color: #198754 !important;
+    }
+</style>
+
+<div class="step-content" data-step="3">
+    <div class="objekti-shell">
+        <div class="objekti-shell-header">
+            <div>
+                <p class="objekti-shell-naslov">Objekti prijave</p>
+                <p class="objekti-shell-podnaslov">Levo izaberite objekat, desno menjajte detalje aktivnog unosa</p>
+            </div>
+            <button type="button" class="btn btn-light btn-sm fw-semibold" id="dodajObjekat">+ Dodaj objekat</button>
+        </div>
+
+        <div class="objekti-layout">
+            <aside class="objekti-traka">
+                <div class="objekti-traka-top">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="mini-badge" id="brojObjekataBedz">0 objekata</span>
+                    </div>
+                    <div class="hint-text">Kliknite na stavku sa leve strane da otvorite detalje.</div>
+                </div>
+
+                <div class="objekti-lista" id="listaObjekata">
+                    <div class="empty-state" id="praznoStanjeListe">
+                        Trenutno nema unetih objekata. Kliknite na „Dodaj objekat“.
+                    </div>
+                </div>
+            </aside>
+
+            <main class="objekti-main">
+                <input type="hidden" id="objektiJson" name="ObjektiJson" value="" />
+
+                <div class="sticky-actions">
+                    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                        <div>
+                            <div class="fw-semibold text-dark">Aktivni objekat</div>
+                            <div class="hint-text mb-0" id="informacijaAktivnogObjekta">Nijedan objekat nije izabran.</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="ukloniObjekat" disabled>Ukloni objekat</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="praznoStanjeEditora" class="empty-state">
+                    Izaberite objekat sa leve strane ili dodajte novi da bi se prikazao obrazac za unos.
+                </div>
+
+                <div id="panelEditora" class="d-none">
+                    <div class="sekcija-podnaslov">1. Osnovni podaci i lokacija</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label smallish">Vrsta prava / objekta</label>
+                            <select class="form-select" id="vrstaId" asp-items="ViewBag.VrsteObjekata">
+                                <option value="">-- Izaberite --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label smallish">Katastarska opština (KO)</label>
+                            <select class="form-select" id="katastarskaOpstinaId">
+                                <option value="">-- Izaberite --</option>
+                                @foreach (var k in Model.opstine)
+                                {
+                                    <option value="@k.Id">@k.Naziv</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label smallish">Ulica i broj objekta</label>
+                            <input type="text" class="form-control" id="ulicaIbroj" placeholder="Ulica i broj">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label smallish">Katastarska parcela</label>
+                            <input type="text" class="form-control" id="brKatParcele" placeholder="Npr. 1234/1">
+                            <div class="hint-text">Unosite oznaku parcele iz dokumentacije ili evidencije.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label smallish">Redni broj (Rbr)</label>
+                            <input type="number" class="form-control" id="rbr" min="1" placeholder="Redni broj objekta">
+                            <div class="hint-text">Pozicija objekta u okviru prijave.</div>
+                        </div>
+                    </div>
+
+                    <div class="sekcija-podnaslov">2. Obeležja objekta</div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label smallish">Godina izgradnje</label>
+                            <input type="number" class="form-control" id="godinaIzgradnje" min="1800" max="2100" placeholder="GGGG">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label smallish">Korisna površina (m²)</label>
+                            <input type="number" step="0.01" class="form-control" id="korisnaPovrsina" min="0">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label smallish">Ukupna površina (m²)</label>
+                            <input type="number" step="0.01" class="form-control" id="ukupnaPovrsina" min="0">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label smallish">Udeo obveznika (%)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control" id="udeoObveznika" min="0" max="100">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sekcija-podnaslov">3. Poreske olakšice i napomene</div>
+                    <div class="row g-3 align-items-start">
+                        <div class="col-md-2">
+                            <div class="form-check form-switch mt-2">
+                                <input type="checkbox" class="form-check-input" id="imaPoreskiKredit" role="switch">
+                                <label class="form-check-label smallish" for="imaPoreskiKredit">Poreski kredit</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="form-check form-switch mt-2">
+                                <input type="checkbox" class="form-check-input" id="imaPoreskoOslobodjenje" role="switch">
+                                <label class="form-check-label smallish" for="imaPoreskoOslobodjenje">Ima oslobođenje</label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label smallish">Napomena</label>
+                            <input type="text" class="form-control" id="napomena" placeholder="Dodatni komentar...">
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const $ = (id) => document.getElementById(id);
+
+        window.validacioneFunkcije = window.validacioneFunkcije || [];
+
+        const listaObjekata = $("listaObjekata");
+        const brojObjekataBedz = $("brojObjekataBedz");
+        const praznoStanjeEditora = $("praznoStanjeEditora");
+        const panelEditora = $("panelEditora");
+        const informacijaAktivnogObjekta = $("informacijaAktivnogObjekta");
+        const dugmeDodajObjekat = $("dodajObjekat");
+        const dugmeUkloniObjekat = $("ukloniObjekat");
+        const unosObjekataJson = $("objektiJson");
+
+        const polja = {
+            vrstaId: $("vrstaId"),
+            katastarskaOpstinaId: $("katastarskaOpstinaId"),
+            ulicaIbroj: $("ulicaIbroj"),
+            brKatParcele: $("brKatParcele"),
+            rbr: $("rbr"),
+            godinaIzgradnje: $("godinaIzgradnje"),
+            korisnaPovrsina: $("korisnaPovrsina"),
+            ukupnaPovrsina: $("ukupnaPovrsina"),
+            udeoObveznika: $("udeoObveznika"),
+            imaPoreskiKredit: $("imaPoreskiKredit"),
+            imaPoreskoOslobodjenje: $("imaPoreskoOslobodjenje"),
+            napomena: $("napomena")
+        };
+
+        const prazniObjekat = () => ({
+            vrstaId: null,
+            katastarskaOpstinaId: null,
+            ulicaIbroj: null,
+            brKatParcele: null,
+            rbr: null,
+            godinaIzgradnje: null,
+            korisnaPovrsina: null,
+            ukupnaPovrsina: null,
+            udeoObveznika: null,
+            imaPoreskiKredit: false,
+            imaPoreskoOslobodjenje: false,
+            napomena: null
+        });
+
+        window.objekti = [];
+        let aktivniIndeks = -1;
+
+        const escapeHtml = (tekst) =>
+            String(tekst)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+
+        const sinhronizujJson = () => {
+            unosObjekataJson.value = JSON.stringify(window.objekti);
+        };
+
+        const osveziBedz = () => {
+            brojObjekataBedz.textContent = `${window.objekti.length} objekata`;
+        };
+
+        const sazetakObjekta = (obj) => {
+            const delovi = [];
+
+            if (obj.rbr) delovi.push(`Rbr ${obj.rbr}`);
+            if (obj.brKatParcele) delovi.push(obj.brKatParcele);
+            if (obj.ulicaIbroj) delovi.push(obj.ulicaIbroj);
+            if (obj.godinaIzgradnje) delovi.push(obj.godinaIzgradnje);
+
+            return delovi.length ? delovi.join(" • ") : "Novi objekat";
+        };
+
+        const procitajPolja = () => ({
+            vrstaId: polja.vrstaId.value || null,
+            katastarskaOpstinaId: polja.katastarskaOpstinaId.value || null,
+            ulicaIbroj: polja.ulicaIbroj.value.trim() || null,
+            brKatParcele: polja.brKatParcele.value.trim() || null,
+            rbr: polja.rbr.value ? parseInt(polja.rbr.value, 10) : null,
+            godinaIzgradnje: polja.godinaIzgradnje.value ? parseInt(polja.godinaIzgradnje.value, 10) : null,
+            korisnaPovrsina: polja.korisnaPovrsina.value ? parseFloat(polja.korisnaPovrsina.value) : null,
+            ukupnaPovrsina: polja.ukupnaPovrsina.value ? parseFloat(polja.ukupnaPovrsina.value) : null,
+            udeoObveznika: polja.udeoObveznika.value ? parseFloat(polja.udeoObveznika.value) : null,
+            imaPoreskiKredit: polja.imaPoreskiKredit.checked,
+            imaPoreskoOslobodjenje: polja.imaPoreskoOslobodjenje.checked,
+            napomena: polja.napomena.value.trim() || null
+        });
+
+        const popuniPolja = (obj) => {
+            polja.vrstaId.value = obj.vrstaId ?? "";
+            polja.katastarskaOpstinaId.value = obj.katastarskaOpstinaId ?? "";
+            polja.ulicaIbroj.value = obj.ulicaIbroj ?? "";
+            polja.brKatParcele.value = obj.brKatParcele ?? "";
+            polja.rbr.value = obj.rbr ?? "";
+            polja.godinaIzgradnje.value = obj.godinaIzgradnje ?? "";
+            polja.korisnaPovrsina.value = obj.korisnaPovrsina ?? "";
+            polja.ukupnaPovrsina.value = obj.ukupnaPovrsina ?? "";
+            polja.udeoObveznika.value = obj.udeoObveznika ?? "";
+            polja.imaPoreskiKredit.checked = !!obj.imaPoreskiKredit;
+            polja.imaPoreskoOslobodjenje.checked = !!obj.imaPoreskoOslobodjenje;
+            polja.napomena.value = obj.napomena ?? "";
+        };
+
+        const ocistiPolja = () => {
+            Object.values(polja).forEach(el => {
+                if (el.type === "checkbox") {
+                    el.checked = false;
+                } else {
+                    el.value = "";
+                }
+
+                el.classList.remove("field-invalid", "field-valid", "is-invalid", "is-valid");
+            });
+        };
+
+        const prikaziEditor = (prikazi) => {
+            praznoStanjeEditora.classList.toggle("d-none", prikazi);
+            panelEditora.classList.toggle("d-none", !prikazi);
+            dugmeUkloniObjekat.disabled = !prikazi;
+        };
+
+        const postaviStanjePolja = (el, ispravno) => {
+            el.classList.toggle("field-invalid", !ispravno);
+            el.classList.toggle("field-valid", ispravno);
+            el.classList.toggle("is-invalid", !ispravno);
+            el.classList.toggle("is-valid", ispravno);
+        };
+
+        const pronadjiGreske = (obj) => {
+        const greske = {};
+
+        if (!obj.vrstaId) greske.vrstaId = true;
+        if (!obj.katastarskaOpstinaId) greske.katastarskaOpstinaId = true;
+
+        if (!obj.ulicaIbroj || !String(obj.ulicaIbroj).trim()) {
+            greske.ulicaIbroj = true;
+        } else {
+            const regex = /^[A-Za-zŠĐČĆŽšđčćž\s]+ \d+$/;
+
+            if (!regex.test(obj.ulicaIbroj.trim())) {
+                greske.ulicaIbroj = true;
+            }
+        }
+
+        if (!obj.brKatParcele || !String(obj.brKatParcele).trim()) greske.brKatParcele = true;
+        if (!obj.brKatParcele || !String(obj.brKatParcele).trim()) {
+            greske.brKatParcele = true;
+        } else {
+            const regex = /^\d+\/\d+$/;
+
+            if (!regex.test(obj.brKatParcele.trim())) {
+                greske.brKatParcele = true;
+        }
+        }
+        if (obj.rbr == null || isNaN(obj.rbr) || obj.rbr < 1) greske.rbr = true;
+        if (!obj.godinaIzgradnje) greske.godinaIzgradnje = true;
+        if (!obj.korisnaPovrsina) greske.korisnaPovrsina = true;
+        if (!obj.ukupnaPovrsina || obj.ukupnaPovrsina<obj.korisnaPovrsina ) greske.ukupnaPovrsina = true;
+        if (!obj.udeoObveznika) greske.udeoObveznika = true;
+
+        return greske;
+    };
+
+        const validirajTrenutnaPolja = () => {
+            const obj = procitajPolja();
+            const greske = pronadjiGreske(obj);
+
+            postaviStanjePolja(polja.vrstaId, !greske.vrstaId);
+            postaviStanjePolja(polja.katastarskaOpstinaId, !greske.katastarskaOpstinaId);
+            postaviStanjePolja(polja.ulicaIbroj, !greske.ulicaIbroj);
+            postaviStanjePolja(polja.brKatParcele, !greske.brKatParcele);
+            postaviStanjePolja(polja.rbr, !greske.rbr);
+            postaviStanjePolja(polja.godinaIzgradnje, !greske.godinaIzgradnje);
+            postaviStanjePolja(polja.korisnaPovrsina, !greske.korisnaPovrsina);
+            postaviStanjePolja(polja.ukupnaPovrsina, !greske.ukupnaPovrsina);
+            postaviStanjePolja(polja.udeoObveznika, !greske.udeoObveznika);
+
+            return Object.keys(greske).length === 0;
+        };
+
+        window.renderList = () => {
+            if (!window.objekti.length) {
+                listaObjekata.innerHTML = `
+                    <div class="empty-state" id="praznoStanjeListe">
+                        Trenutno nema unetih objekata. Kliknite na „Dodaj objekat“.
+                    </div>
+                `;
+
+                osveziBedz();
+                return;
+            }
+
+            listaObjekata.innerHTML = window.objekti.map((obj, index) => {
+                const greske = pronadjiGreske(obj);
+                const neispravno = Object.keys(greske).length > 0;
+
+                return `
+                    <div class="objekat-jedinica ${index === aktivniIndeks ? "active" : ""} ${neispravno ? "invalidan" : ""}" data-index="${index}">
+                        <div class="d-flex align-items-center justify-content-between gap-2">
+                            <div class="objekat-jedinica-naslov">
+                                Objekat #${index + 1}
+                            </div>
+
+                            ${neispravno
+                                ? `<span class="mini-badge invalid">Neispravno</span>`
+                                : `<span class="mini-badge">Ispravno</span>`
+                            }
+                        </div>
+
+                        <div class="objekat-jedinica-meta">
+                            ${escapeHtml(sazetakObjekta(obj))}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            listaObjekata.querySelectorAll(".objekat-jedinica").forEach(el => {
+                el.addEventListener("click", () => {
+                    sacuvajTrenutni();
+
+                    aktivniIndeks = Number(el.dataset.index);
+
+                    ucitajTrenutni();
+                    window.renderList();
+                });
+            });
+
+            osveziBedz();
+        };
+
+        const sacuvajTrenutni = () => {
+            if (aktivniIndeks < 0 || aktivniIndeks >= window.objekti.length) {
+                return;
+            }
+
+            window.objekti[aktivniIndeks] = procitajPolja();
+
+            sinhronizujJson();
+        };
+
+        const ucitajTrenutni = () => {
+            if (aktivniIndeks < 0 || aktivniIndeks >= window.objekti.length) {
+                aktivniIndeks = -1;
+
+                prikaziEditor(false);
+
+                informacijaAktivnogObjekta.textContent = "Nijedan objekat nije izabran.";
+
+                ocistiPolja();
+
+                return;
+            }
+
+            prikaziEditor(true);
+
+            popuniPolja(window.objekti[aktivniIndeks]);
+
+            informacijaAktivnogObjekta.textContent = `Uređujete objekat #${aktivniIndeks + 1}`;
+
+            dugmeUkloniObjekat.disabled = false;
+
+            validirajTrenutnaPolja();
+        };
+
+        const dodajObjekat = () => {
+            sacuvajTrenutni();
+
+            window.objekti.push(prazniObjekat());
+
+            aktivniIndeks = window.objekti.length - 1;
+
+            ucitajTrenutni();
+
+            window.renderList();
+
+            sinhronizujJson();
+        };
+
+        const ukloniTrenutni = () => {
+            if (aktivniIndeks < 0 || aktivniIndeks >= window.objekti.length) {
+                return;
+            }
+
+            window.objekti.splice(aktivniIndeks, 1);
+
+            aktivniIndeks = window.objekti.length
+                ? Math.min(aktivniIndeks, window.objekti.length - 1)
+                : -1;
+
+            window.renderList();
+
+            ucitajTrenutni();
+
+            sinhronizujJson();
+        };
+
+        const promenaPolja = () => {
+            if (aktivniIndeks < 0) {
+                return;
+            }
+
+            window.objekti[aktivniIndeks] = procitajPolja();
+
+            validirajTrenutnaPolja();
+
+            window.renderList();
+
+            sinhronizujJson();
+        };
+
+        window.validacioneFunkcije[2] = function () {
+            sacuvajTrenutni();
+
+            let sveIspravno = true;
+            let prviNeispravanIndeks = -1;
+
+            window.objekti.forEach((obj, index) => {
+                const greske = pronadjiGreske(obj);
+
+                if (Object.keys(greske).length > 0) {
+                    sveIspravno = false;
+
+                    if (prviNeispravanIndeks === -1) {
+                        prviNeispravanIndeks = index;
+                    }
+                }
+            });
+
+            window.renderList();
+
+            if (!sveIspravno) {
+                aktivniIndeks = prviNeispravanIndeks;
+
+                ucitajTrenutni();
+
+                window.renderList();
+            }
+
+            console.log(window.objekti.length);
+
+            if (window.objekti.length <= 0) {
+                sveIspravno = false;
+
+                alert("Unesite bar jedan objekat");
+            }
+
+
+            return sveIspravno;
+        };
+
+        dugmeDodajObjekat.addEventListener("click", dodajObjekat);
+        dugmeUkloniObjekat.addEventListener("click", ukloniTrenutni);
+
+        Object.values(polja).forEach(el => {
+            el.addEventListener("input", promenaPolja);
+            el.addEventListener("change", promenaPolja);
+        });
+
+        window.renderList();
+        ucitajTrenutni();
+        sinhronizujJson();
+    });
+</script>

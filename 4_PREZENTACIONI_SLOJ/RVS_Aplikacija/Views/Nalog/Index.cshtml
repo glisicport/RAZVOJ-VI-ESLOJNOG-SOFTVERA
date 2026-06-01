@@ -1,0 +1,138 @@
+﻿@model RVS_Aplikacija.ViewModels.ProfilViewModel
+<style>
+    :root {
+        --plava-drzavna: #0b3d6e;
+        --crvena-akcija: #b31f2a;
+        --pozadina-svetla: #f4f7fb;
+    }
+
+    body {
+        background: var(--pozadina-svetla);
+    }
+
+    .zaglavlje-kartice {
+        background: var(--plava-drzavna);
+        color: white;
+    }
+
+    .dugme-sacuvaj {
+        background: var(--crvena-akcija);
+        color: white;
+        border: none;
+    }
+
+        .dugme-sacuvaj:hover {
+            background: #8f1822;
+            color: white;
+        }
+
+    .greska-tekst {
+        color: #dc3545;
+        font-size: 0.875rem;
+    }
+</style>
+
+<div class="container py-4">
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+
+            @if (TempData["Uspeh"] != null)
+            {
+                <div class="alert alert-success">
+                    @TempData["Uspeh"]
+                </div>
+            }
+
+            @if (TempData["Greska"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Greska"]
+                </div>
+            }
+            @if (!ViewData.ModelState.IsValid)
+            {
+                @Html.ValidationSummary(false, "", new { @class = "alert alert-danger" })
+            }
+            <form asp-action="Izmeni" asp-controller="Nalog" method="post" class="card shadow-sm border-0">
+
+                <div class="card-header zaglavlje-kartice">
+                    <h5 class="mb-0">Izmena korisničkog profila</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <input type="hidden" asp-for="Id" />
+
+                    <div class="row g-3">
+
+                     
+                        <div class="col-md-6">
+                            <label class="form-label">Kontakt telefon</label>
+                            <input asp-for="Telefon" class="form-control" />
+                            <span asp-validation-for="Telefon" class="greska-tekst"></span>
+                        </div>
+                        @if (!Model.PrikazNaziva)
+                            {
+                                <div class="col-md-6">
+                                    <label class="form-label">Ime</label>
+                                    <input asp-for="Ime" class="form-control" />
+                                    <span asp-validation-for="Ime" class="greska-tekst"></span>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Prezime</label>
+                                    <input asp-for="Prezime" class="form-control" />
+                                    <span asp-validation-for="Prezime" class="greska-tekst"></span>
+                                </div>
+                            }
+                            else
+                            {
+                                
+                            }
+                            <div class="col-md-6">
+                            <label class="form-label">Mesto prebivališta</label>
+                            <select asp-for="MestoID" class="form-select">
+                                <option value="">Izaberite mesto</option>
+
+                                @foreach (var mesto in ViewBag.Mesta)
+                                {
+                                    <option value="@mesto.Id">@mesto.Naziv (@mesto.Ptt)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="MestoID" class="greska-tekst"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Stan</label>
+                            <input asp-for="Stan" class="form-control" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Ulica i broj</label>
+                            <input asp-for="UlicaBroj" class="form-control" />
+                            <span asp-validation-for="UlicaBroj" class="greska-tekst"></span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="card-footer bg-white border-0 d-flex justify-content-end gap-2">
+
+                    <a asp-action="Index" class="btn btn-secondary">
+                        Nazad
+                    </a>
+
+                    <button type="submit" class="btn dugme-sacuvaj px-4">
+                        Sačuvaj izmene
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>

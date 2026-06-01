@@ -1,0 +1,14 @@
+﻿.login-stranica {
+    background: radial-gradient(circle at top, rgba(11, 61, 110, 0.12), transparent 40%), linear-gradient(180deg, #f8fbff 0%, #eef3f9 100%);
+}
+
+.login-kartica {
+    width: 100%;
+    max-width: 420px;
+    border-radius: 1rem;
+}
+
+.form-control:focus {
+    border-color: #0b3d6e;
+    box-shadow: 0 0 0 0.2rem rgba(11, 61, 110, 0.2);
+}

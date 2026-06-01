@@ -1,0 +1,144 @@
+﻿@using Microsoft.AspNetCore.Http
+
+
+<!DOCTYPE html>
+<html lang="sr-Latn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Poreska uprava</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="page-bg d-flex flex-column min-vh-100">
+    <div class="srbija-zastava"></div>
+
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark navigacija-glavno shadow-sm">
+            <div class="container py-1">
+                <a class="nav-logo fw-bold d-flex align-items-center gap-2" asp-controller="Pocetna" asp-action="Index">
+                    <img width="40px" height="50px" src="/Slike/GrbSrbije.webp" />
+                    <span>
+                        PORESKA UPRAVA
+                        <span class="logo-tekst">| e-Porezi</span>
+                    </span>
+                </a>
+
+                <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                        aria-controls="mainNavbar" aria-expanded="false" aria-label="Prikaži navigaciju">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse w-100" id="mainNavbar">
+                    <ul class="navbar-nav mx-auto text-center gap-lg-2 nav-center">
+                        <li class="nav-item">
+                            <a class="nav-link px-lg-3" asp-controller="Pocetna" asp-action="Index">Početna</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-lg-3" asp-controller="Staticki" asp-action="OSistemu">O sistemu</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-lg-3" asp-controller="Staticki" asp-action="Svrha">Svrha</a>
+                        </li>
+
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle px-lg-3"
+                                   href="#"
+                                   id="poreskePrijaveDropdown"
+                                   role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    Poreske prijave
+                                </a>
+
+                                <ul class="dropdown-menu" aria-labelledby="poreskePrijaveDropdown">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="PoreskaPrijava"
+                                           asp-action="Index">
+                                            Prijava imovine
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="PoreskaPrijava"
+                                           asp-action="Pregled">
+                                            Pregled prijava
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+
+                       
+                    </ul>
+
+                    <ul class="navbar-nav ms-lg-auto text-center text-lg-end">
+                        @if (User.Identity?.IsAuthenticated ?? false)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle fw-semibold" href="#" id="userDropdown"
+                                   role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @User.Identity.Name (@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value)
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Nalog" asp-action="Index">Podešavanja profila</a>
+                                    </li>
+
+                                    @if (User.IsInRole("admin"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Sifarnici" asp-action="Index">Šifarnici</a>
+                                        </li>
+                                      
+                                    }
+
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Nalog" asp-action="OdjaviSe" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item text-danger fw-semibold">Odjavi se</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Nalog" asp-action="Prijava">Prijava</a>
+                            </li>
+                            <li class="nav-item ms-lg-2">
+                                <a class="btn btn-light btn-sm px-3 fw-semibold shadow-sm" asp-controller="Nalog" asp-action="Registracija">
+                                    Registracija
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow-1 py-4">
+        @RenderBody()
+    </main>
+
+    <footer class="footer-glavni border-top">
+        <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 py-3">
+            <span class="small text-muted">&copy; @DateTime.Now.Year - Poreska uprava | e-Porezi</span>
+            <a class="small footer-link" asp-controller="Pocetna" asp-action="Privatnost">Privatnost korišćenja</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

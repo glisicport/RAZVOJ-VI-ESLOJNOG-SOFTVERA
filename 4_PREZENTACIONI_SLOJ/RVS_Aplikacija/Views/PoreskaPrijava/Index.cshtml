@@ -1,0 +1,402 @@
+﻿
+
+@model RVS_Aplikacija.ViewModels.PoreskaPrijavaViewModel
+@using System.Security.Claims
+
+@{
+    ViewData["Title"] = "Poreska prijava";
+}
+@{
+    var idKorisnika = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+}
+<style>
+    :root {
+        --drzavna-plava: #0b3d6e;
+        --drzavna-plava-tamna: #082c50;
+        --drzavna-crvena: #b31f2a;
+        --pozadina-meka: #f4f7fb;
+        --tekst-glavni: #19324a;
+        --ivica-kartice: #d9e2ec;
+    }
+
+    body {
+        background: var(--pozadina-meka);
+        color: var(--tekst-glavni);
+    }
+
+    .drzavno-container {
+        max-width: 900px;
+        margin: auto;
+    }
+
+    .drzavno-kartica {
+        border: 1px solid var(--ivica-kartice);
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.06);
+        background: #fff;
+    }
+
+    .drzavno-header {
+        background: linear-gradient(135deg, var(--drzavna-plava), var(--drzavna-plava-tamna));
+        color: white;
+        padding: 1rem 1.25rem;
+        border-radius: 10px 10px 0 0;
+    }
+
+        .drzavno-header small {
+            opacity: .85;
+        }
+
+    .korak-naslov {
+        font-weight: 600;
+        color: var(--drzavna-plava);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        font-size: .9rem;
+        letter-spacing: .3px;
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 4px;
+        background: #e6edf5;
+    }
+
+    .progress-bar {
+        background: var(--drzavna-plava);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--drzavna-plava);
+        box-shadow: 0 0 0 .15rem rgba(11,61,110,.15);
+    }
+
+    .btn-glavni {
+        background: var(--drzavna-plava);
+        border-color: var(--drzavna-plava);
+    }
+
+        .btn-glavni:hover {
+            background: var(--drzavna-plava-tamna);
+            border-color: var(--drzavna-plava-tamna);
+        }
+
+    .btn-uspeh {
+        background: var(--drzavna-crvena);
+        border-color: var(--drzavna-crvena);
+    }
+
+        .btn-uspeh:hover {
+            background: #8f1821;
+            border-color: #8f1821;
+        }
+
+    .btn-linija-primary {
+        color: var(--drzavna-plava);
+        border-color: var(--drzavna-plava);
+    }
+
+        .btn-linija-primary:hover {
+            background: var(--drzavna-plava);
+            color: #fff;
+        }
+
+    .korak {
+        display: none;
+    }
+
+        .korak.active {
+            display: block;
+        }
+</style>
+
+<div class="container py-4 drzavno-container">
+    <div class="card drzavno-kartica">
+        <div class="drzavno-header">
+            <h5 class="mb-0">PORESKA PRIJAVA</h5>
+            <small>Elektronsko podnošenje obrasca</small>
+        </div>
+
+        <div class="card-body">
+            <div class="progress mb-4">
+                <div id="trakaNapretka" class="progress-bar" style="width:25%"></div>
+            </div>
+
+            <form method="post" id="formaCarobnjak">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="IzmenaId" name="IzmenaId" />
+                <input type="hidden" id="PostojecePrijavaId" name="PostojecePrijavaId" />
+
+                <div class="korak active" data-korak="1">
+                    <div class="korak-naslov">Korak 1 - Osnovni podaci</div>
+                    @Html.Partial("DeloviPrijave/_Korak1Osnovni", Model)
+                </div>
+
+                <div class="korak" data-korak="2">
+                    <div class="korak-naslov">Korak 2 - Datumi</div>
+                    @Html.Partial("DeloviPrijave/_Korak2Datumi", Model)
+                </div>
+
+                <div class="korak" data-korak="3">
+                    <div class="korak-naslov">Korak 3 - Olaksice</div>
+                    @Html.Partial("DeloviPrijave/_Korak3Olaksice", Model)
+                </div>
+
+                <div class="korak" data-korak="4">
+                    <div class="korak-naslov">Korak 4 - Dodatni podaci</div>
+                    @Html.Partial("DeloviPrijave/_Korak4Dodatni", Model)
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-linija-primary" id="dugmeNazad">Nazad</button>
+                    <button type="button" class="btn btn-glavni" id="dugmeSledeci">Sledeći</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.validacioneFunkcije = [null, null, null, null, null];
+
+    const idKorisnika = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(idKorisnika));
+
+    const apiURL = "http://localhost:5089";
+
+    let trenutniKorak = 1;
+    const ukupanBrojKoraka = 4;
+
+    const koraci = document.querySelectorAll(".korak");
+    const trakaNapretka = document.getElementById("trakaNapretka");
+    const dugmeSledeci = document.getElementById("dugmeSledeci");
+    const dugmeNazad = document.getElementById("dugmeNazad");
+    const formaCarobnjak = document.getElementById("formaCarobnjak");
+
+    function obavezno(el) {
+        let ok = true;
+        if (!el.value || el.value.trim() === "") {
+            el.classList.add("is-invalid");
+            ok = false;
+        } else {
+            el.classList.remove("is-invalid");
+        }
+        return ok;
+    }
+
+    function dobiParametre(name) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(name);
+    }
+
+    function postaviVrednost(selector, value) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        el.value = value ?? "";
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function postaviVrednostprekoID(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.value = value ?? "";
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function Cekiraj(id, value) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.checked = !!value;
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function PostaviDatum(v) {
+        if (!v) return "";
+        const d = new Date(v);
+        if (isNaN(d.getTime())) return "";
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function postaviDecimalneVrednosti(v) {
+        if (v === null || v === undefined || v === "") return "";
+        const n = Number(String(v).replace(",", "."));
+        return isNaN(n) ? "" : String(n);
+    }
+
+    function azurirajInterfejs() {
+        koraci.forEach(s => {
+            s.classList.remove("active");
+            if (parseInt(s.dataset.korak) === trenutniKorak) {
+                s.classList.add("active");
+            }
+        });
+
+        trakaNapretka.style.width = (trenutniKorak / ukupanBrojKoraka) * 100 + "%";
+
+        dugmeNazad.style.display = trenutniKorak === 1 ? "none" : "inline-block";
+
+        if (trenutniKorak === ukupanBrojKoraka) {
+            dugmeSledeci.classList.add("d-none");
+        } else {
+            dugmeSledeci.classList.remove("d-none");
+        }
+    }
+
+    function izvuciPrijaveIzOdgovora(data) {
+        if (Array.isArray(data)) return data;
+        if (data?.prijave && Array.isArray(data.prijave)) return data.prijave;
+        if (data?.Prijave && Array.isArray(data.Prijave)) return data.Prijave;
+        return [];
+    }
+
+    function popuniNepokretnosti(nepokretnosti) {
+        window.objekti = Array.isArray(nepokretnosti) ? nepokretnosti : [];
+
+        if (typeof window.renderNepokretnosti === "function") {
+            window.renderNepokretnosti(window.objekti);
+            return;
+        }
+
+        const prikaz = document.getElementById("nepokretnostiContainer")
+            || document.getElementById("listaNepokretnosti")
+            || document.getElementById("containerNepokretnosti");
+
+        if (!prikaz) return;
+
+        prikaz.innerHTML = "";
+
+        window.objekti.forEach((obj, indeks) => {
+            const kartica = document.createElement("div");
+            kartica.className = "border rounded p-3 mb-2 bg-light";
+
+            kartica.innerHTML = `
+                <div class="fw-bold mb-1">Nepokretnost ${indeks + 1}</div>
+                <div>Vrsta: ${obj.vrstaId ?? ""}</div>
+                <div>Katastarska opština: ${obj.katastarskaOpstinaId ?? ""}</div>
+                <div>Parcela: ${obj.brKatParcele ?? ""}</div>
+                <div>Površina: ${obj.ukupnaPovrsina ?? ""}</div>
+                <div>Udeo: ${obj.udeoObveznika ?? ""}</div>
+            `;
+
+            prikaz.appendChild(kartica);
+        });
+    }
+
+        function popuniFormu(prijava) {
+        if (!prijava) return;
+
+        postaviVrednostprekoID("PostojecePrijavaId", prijava.id ?? "");
+        postaviVrednostprekoID("IzmenaId", prijava.id ?? "");
+
+        postaviVrednost("#VrstaPravaId", prijava.vrstaPravaId ?? "");
+        postaviVrednost("#JlsId", prijava.jlsId ?? "");
+        postaviVrednost("#OrganizacionaJedinica", prijava.organizacionaJedinica ?? "");
+        postaviVrednost("#dokazi", prijava.popisPrilozenihDokazas ?? "");
+        postaviVrednost("#napomenaDokument", prijava.napomena ?? "");
+        postaviVrednost("#kredit_osnov", prijava.kredit_osnov ?? "");
+        postaviVrednost("#oslobodjenje_osnov", prijava.oslobodjenje_osnov ?? "");
+
+        postaviVrednost("#datum_nastanka", PostaviDatum(prijava.danNastankaPoreskeObaveze));
+        postaviVrednost("#datum_prestanka", PostaviDatum(prijava.danPrestankaPoreskeObaveze));
+        postaviVrednost("#datumPodnosenja", PostaviDatum(prijava.datumPodnosenja));
+        postaviVrednost("#godinaIzgradnje", PostaviDatum(prijava.godinaIzgradnje));
+
+        Cekiraj("poreski_kredit", prijava.imaPoreskiKredit);
+        Cekiraj("poresko_oslobodjenje", prijava.imaPoreskoOslobodjenje);
+
+        postaviVrednost("#oslobodjenjeOsnov", postaviDecimalneVrednosti(prijava.oslobodjenjeOsnov));
+        postaviVrednost("#osnova", postaviDecimalneVrednosti(prijava.osnova));
+
+        postaviVrednost("#napomena", prijava.napomena ?? "");
+
+        postaviVrednost("#tipObveznika", prijava.obveznikTip ?? "");
+        postaviVrednost("#podnosilacNaziv", prijava.podnosilacNaziv ?? "");
+
+        postaviVrednost("#imeLica", prijava.noviObveznikIme ?? "");
+        postaviVrednost("#prezimeLica", prijava.noviObveznikPrezime ?? "");
+
+        popuniNepokretnosti(prijava.objekti ?? []);
+
+        if (typeof window.prikazi_rezultate === "function") {
+            window.prikazi_rezultate();
+        }
+    }
+    async function ucitajZaIzmenu() {
+        const izmenaId = dobiParametre("izmenaId");
+        if (!izmenaId) return;
+
+        postaviVrednostprekoID("IzmenaId", izmenaId);
+
+        try {
+            const url = `${apiURL}/api/PoreskaPrijava/VratiPrijavuPoId?prijava_id=${encodeURIComponent(izmenaId)}`;
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Accept": "application/json"
+                }
+            });
+
+            if (!response.ok) {
+                console.error("Greška pri čitanju prijava:", response.status, response.statusText);
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+            const prijave = izvuciPrijaveIzOdgovora(data);
+
+            const trazena = prijave[0];
+            console.log(trazena[0]);
+            if (!trazena) {
+                console.warn("Prijava sa izmenaId nije pronađena:", izmenaId);
+                return;
+            }
+
+            popuniFormu(trazena);
+        } catch (err) {
+            console.error("Greška pri autofill učitavanju:", err);
+        }
+    }
+
+    dugmeSledeci.addEventListener("click", () => {
+        if (typeof window.validacioneFunkcije[trenutniKorak - 1] === "function") {
+            const ok = window.validacioneFunkcije[trenutniKorak - 1]();
+            if (!ok) return;
+        }
+        if(trenutniKorak==2) {
+            renderList();
+        }
+        if (trenutniKorak < ukupanBrojKoraka) {
+            trenutniKorak++;
+            if (trenutniKorak === 4 && typeof prikazi_rezultate === "function") {
+                prikazi_rezultate();
+            }
+            azurirajInterfejs();
+        }
+    });
+
+    dugmeNazad.addEventListener("click", () => {
+        if (trenutniKorak > 1) {
+            trenutniKorak--;
+            azurirajInterfejs();
+        }
+    });
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        azurirajInterfejs();
+        await ucitajZaIzmenu();
+    });
+
+    formaCarobnjak.addEventListener("submit", function () {
+        const izmenaId = dobiParametre("izmenaId");
+        if (izmenaId) {
+            postaviVrednostprekoID("IzmenaId", izmenaId);
+        }
+    });
+</script>

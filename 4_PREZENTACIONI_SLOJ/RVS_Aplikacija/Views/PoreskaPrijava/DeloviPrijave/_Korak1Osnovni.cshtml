@@ -1,0 +1,387 @@
+﻿@model RVS_Aplikacija.ViewModels.PoreskaPrijavaViewModel
+
+@{
+    var nazivKorisnika = User.FindFirst("Naziv")?.Value;
+}
+
+<style>
+    .drzavno-kartica {
+        border: 1px solid #d9e2ec;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1.25rem rgba(11, 61, 110, .08);
+    }
+
+    .drzavno-kartica-header {
+        background: linear-gradient(135deg, #0b3d6e, #082c50);
+        color: #fff;
+        border-radius: 1rem 1rem 0 0 !important;
+        padding: 1rem 1.25rem;
+    }
+
+    .selekcija-ListBoxa {
+        min-height: 190px;
+        border-radius: .85rem;
+        padding: .75rem;
+        background: #fff;
+    }
+
+    .form-control, .form-select {
+        border-radius: .75rem;
+    }
+
+    .btn {
+        border-radius: .75rem;
+    }
+
+    .labela-2 {
+        font-size: .875rem;
+        color: #5a6b7d;
+        margin-bottom: .35rem;
+    }
+
+    .preporuka-tekst {
+        font-size: .8rem;
+        color: #6c7a89;
+        margin-top: .25rem;
+    }
+</style>
+
+<div class="row g-3">
+
+    <div style="display:none" class="col-12 form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="prekidacObveznik" checked>
+        <label class="form-check-label">Ja sam obveznik</label>
+
+        <div class="preporuka-tekst">
+            Određuje da li se prijava vezuje za vaš korisnički nalog ili se bira drugi obveznik.
+        </div>
+    </div>
+
+    <div class="col-md-6" id="jaObveznik">
+        <label class="form-label">Obveznik</label>
+
+        <input class="form-control" value="JA" readonly>
+
+        <div class="preporuka-tekst">
+            Automatski dodeljen trenutni korisnik sistema.
+        </div>
+    </div>
+
+    <div class="col-md-6 d-none" id="izborObveznika">
+        <label class="form-label">Obveznik</label>
+
+        <select class="form-select" id="obveznikLista"></select>
+
+        <div class="preporuka-tekst">
+            Izaberite postojećeg obveznika ili kreirajte novog ako ne postoji u sistemu.
+        </div>
+
+        <button type="button"
+                class="btn btn-sm btn-outline-primary mt-2"
+                data-bs-toggle="modal"
+                data-bs-target="#modalObveznik">
+            Novi
+        </button>
+
+        <div class="preporuka-tekst">
+            Otvara formu za unos fizičkog ili pravnog lica.
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Podnosilac prijave</label>
+
+        <input class="form-control" id="nazivKorisnika" value="@nazivKorisnika" readonly>
+
+        <div class="preporuka-tekst">
+            Korisnik koji podnosi poresku prijavu.
+        </div>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label" asp-for="VrstaPravaId">Vrsta prava</label>
+
+        <select asp-for="VrstaPravaId"
+                class="form-select"
+                size="6">
+
+            @foreach (var item in Model.VrstePrava)
+            {
+                <option value="@item.Id">
+                    @item.Sifra - @item.Naziv
+                </option>
+            }
+        </select>
+
+        <div class="preporuka-tekst">
+            Pravna osnova korišćenja ili vlasništva nad nepokretnosti.
+        </div>
+
+        <span asp-validation-for="VrstaPravaId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label" asp-for="JlsId">JLS</label>
+
+        <select class="form-select" asp-for="JlsId" asp-items="ViewBag.Jls">
+            <option value="">-- izaberite --</option>
+        </select>
+
+        <div class="preporuka-tekst">
+            Nadležna jedinica lokalne samouprave.
+        </div>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label" asp-for="OrganizacionaJedinica">Organizaciona jedinica</label>
+
+        <input type="text" class="form-control" id="OrganizacionaJedinica" asp-for="OrganizacionaJedinica" />
+
+        <div class="preporuka-tekst">
+            Unesite organizacionu jedinicu.
+        </div>
+    </div>
+
+</div>
+<div class="modal fade" id="modalObveznik" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content p-3">
+
+            <div class="mb-3">
+                <label class="form-label">Tip obveznika</label>
+                <select class="form-select" id="tipObveznika">
+                    <option value="F">Fizičko lice</option>
+                    <option value="P">Pravno lice</option>
+                </select>
+            </div>
+
+            <div id="fizickoPolje" class="border rounded p-3 mb-3">
+                <div class="fw-semibold mb-2">Fizičko lice</div>
+
+                <input class="form-control mb-2" id="imeLica" placeholder="Ime">
+                <input class="form-control mb-2" id="prezimeLica" placeholder="Prezime">
+                <input class="form-control mb-2" id="jmbgLica" placeholder="JMBG">
+            </div>
+
+            <div id="pravnoPolje" class="border rounded p-3 mb-3 d-none">
+                <div class="fw-semibold mb-2">Pravno lice</div>
+
+                <input class="form-control mb-2" id="nazivPravnogLica" placeholder="Naziv">
+                <input class="form-control mb-2" id="pibPravnogLica" placeholder="PIB">
+            </div>
+
+            <div class="border rounded p-3 mb-3">
+                <div class="fw-semibold mb-2">Adresa</div>
+
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Naselje</label>
+                        <select class="form-select" id="mestoLica">
+                            <option value="">-- izaberite naselje --</option>
+                            <option value="1">Beograd</option>
+                            <option value="2">Novi Sad</option>
+                            <option value="3">Niš</option>
+                            <option value="4">Kragujevac</option>
+                            <option value="5">Zrenjanin</option>
+                        </select>
+                    </div>
+
+                    <div class="col-8">
+                        <input class="form-control" id="ulica" placeholder="Ulica">
+                    </div>
+
+                    <div class="col-4">
+                        <input class="form-control" id="broj" placeholder="Broj">
+                    </div>
+
+                    <div class="col-4">
+                        <input class="form-control" id="sprat" placeholder="Sprat">
+                    </div>
+
+                    <div class="col-8">
+                        <input class="form-control" id="postanskiBroj" placeholder="Poštanski broj">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border rounded p-3 mb-3">
+                <div class="fw-semibold mb-2">Kontakt</div>
+                <input class="form-control" id="telefonLica" placeholder="Telefon">
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" id="sacuvajObveznika">
+                Sačuvaj
+            </button>
+
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log(window.validacioneFunkcije);
+
+        window.validacioneFunkcije[0] = function () {
+
+            const obveznikSwitch = document.getElementById("prekidacObveznik");
+            const obveznikLista = document.getElementById("obveznikLista");
+
+            let ok = true;
+
+            if (!obveznikSwitch.checked) {
+                if (!obveznikLista.value) {
+                    obveznikLista.classList.add("is-invalid");
+                    ok = false;
+                } else {
+                    obveznikLista.classList.remove("is-invalid");
+                }
+            }
+
+            const vrstaPrava = document.querySelector('[name="VrstaPravaId"]');
+            const jls = document.querySelector('[name="JlsId"]');
+            const OrganizacionaJedinica = document.querySelector('[name="OrganizacionaJedinica"]');
+
+            function Obavezno(el) {
+                if (!el.value || !el.value.trim()) {
+                    el.classList.add("is-invalid");
+                    ok = false;
+                } else {
+                    el.classList.remove("is-invalid");
+                }
+            }
+
+            Obavezno(vrstaPrava);
+            Obavezno(jls);
+            Obavezno(OrganizacionaJedinica);
+
+            return ok;
+        };
+                console.log(window.validacioneFunkcije);
+
+        const prekidacObveznik = document.getElementById("prekidacObveznik");
+        const jaObveznik = document.getElementById("jaObveznik");
+        const izborObveznika = document.getElementById("izborObveznika");
+        const listaObveznika = document.getElementById("obveznikLista");
+
+        const tipObveznika = document.getElementById("tipObveznika");
+        const fizickoPolje = document.getElementById("fizickoPolje");
+        const pravnoPolje = document.getElementById("pravnoPolje");
+
+        const imeLica = document.getElementById("imeLica");
+        const prezimeLica = document.getElementById("prezimeLica");
+        const jmbgLica = document.getElementById("jmbgLica");
+
+        const nazivPravnogLica = document.getElementById("nazivPravnogLica");
+        const pibPravnogLica = document.getElementById("pibPravnogLica");
+
+        const mestoLica = document.getElementById("mestoLica");
+        const ulica = document.getElementById("ulica");
+        const broj = document.getElementById("broj");
+        const sprat = document.getElementById("sprat");
+        const postanskiBroj = document.getElementById("postanskiBroj");
+
+        let lokalnaMemorija = [];
+
+        function toggleObveznik() {
+            jaObveznik.classList.toggle("d-none", !prekidacObveznik.checked);
+            izborObveznika.classList.toggle("d-none", prekidacObveznik.checked);
+        }
+
+        prekidacObveznik.onchange = toggleObveznik;
+        toggleObveznik();
+
+        tipObveznika.onchange = () => {
+            const fiz = tipObveznika.value === "F";
+            fizickoPolje.classList.toggle("d-none", !fiz);
+            pravnoPolje.classList.toggle("d-none", fiz);
+        };
+
+        function validacija() {
+
+            let ok = true;
+
+            const Obavezno = (el) => {
+                if (!el.value || !el.value.trim()) {
+                    el.classList.add("is-invalid");
+                    ok = false;
+                } else {
+                    el.classList.remove("is-invalid");
+                }
+            };
+
+            if (tipObveznika.value === "F") {
+                Obavezno(imeLica);
+                Obavezno(prezimeLica);
+                Obavezno(jmbgLica);
+
+                if (jmbgLica.value && jmbgLica.value.length !== 13) {
+                    jmbgLica.classList.add("is-invalid");
+                    ok = false;
+                }
+            } else {
+                Obavezno(nazivPravnogLica);
+                Obavezno(pibPravnogLica);
+
+                if (pibPravnogLica.value &&
+                    (pibPravnogLica.value.length < 8 || pibPravnogLica.value.length > 9)) {
+                    pibPravnogLica.classList.add("is-invalid");
+                    ok = false;
+                }
+            }
+
+            Obavezno(mestoLica);
+            Obavezno(ulica);
+            Obavezno(broj);
+            Obavezno(postanskiBroj);
+
+            return ok;
+        }
+
+        document.getElementById("sacuvajObveznika").onclick = (e) => {
+
+            e.preventDefault();
+
+            if (!validacija()) return;
+
+            const adresa = {
+                mesto: mestoLica.value,
+                ulica: ulica.value,
+                broj: broj.value,
+                sprat: sprat.value,
+                postanskiBroj: postanskiBroj.value
+            };
+
+            let noviObveznik;
+
+            if (tipObveznika.value === "F") {
+                noviObveznik = {
+                    id: Date.now(),
+                    naziv: (imeLica.value + " " + prezimeLica.value).trim(),
+                    tip: "F",
+                    jmbg: jmbgLica.value,
+                    adresa: adresa,
+                    telefon: telefonLica.value
+                };
+            } else {
+                noviObveznik = {
+                    id: Date.now(),
+                    naziv: nazivPravnogLica.value,
+                    tip: "P",
+                    pib: pibPravnogLica.value,
+                    adresa: adresa,
+                    telefon: telefonLica.value
+                };
+            }
+
+            lokalnaMemorija.push(noviObveznik);
+
+            const opcija = document.createElement("option");
+            opcija.value = noviObveznik.id;
+            opcija.textContent = noviObveznik.naziv;
+            opcija.selected = true;
+
+            listaObveznika.appendChild(opcija);
+
+            bootstrap.Modal.getInstance(document.getElementById("modalObveznik")).hide();
+        };
+
+    });
+</script>

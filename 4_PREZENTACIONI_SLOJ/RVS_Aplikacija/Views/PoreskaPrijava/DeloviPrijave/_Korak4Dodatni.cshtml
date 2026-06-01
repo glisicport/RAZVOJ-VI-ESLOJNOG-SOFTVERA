@@ -1,0 +1,457 @@
+﻿@model RVS_Aplikacija.ViewModels.PoreskaPrijavaViewModel
+@using System.Security.Claims
+
+@{
+    var korisnikID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "";
+}
+
+<h1>Poreska prijava</h1>
+
+<div id="prikazPodataka" class="mt-4 p-4 border rounded bg-light shadow-sm">
+    <div class="text-center py-3 text-muted small">
+        <p class="mb-0">
+            Kliknite na dugme za ekstrakciju ili pokrenite funkciju kako biste generisali pregled prijave.
+        </p>
+    </div>
+</div>
+
+<script>
+    const korisnikID = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(korisnikID));
+
+    function ekstraktujPodatke() {
+
+        const DaLiJeKorisnikObaveznik =
+            document.getElementById('prekidacObveznik')?.checked || false;
+
+        function izvuciObjekte() {
+            return window.objekti || [];
+        }
+
+        const isporuka = {
+            obveznik: DaLiJeKorisnikObaveznik
+                ? { id: korisnikID }
+                : { tip: "Novi" },
+
+            podnosilac: korisnikID,
+            OrganizacionaJedinica: document.querySelector('[name="OrganizacionaJedinica"]').value ?? '',
+            vrstaPravaId:
+                document.getElementById('VrstaPravaId')?.value || null,
+
+            jlsId:
+                document.getElementById('JlsId')?.value || null,
+
+            noviObveznik: DaLiJeKorisnikObaveznik
+                ? null
+                : {
+                    tip:
+                        document.getElementById('tipObveznika')?.value || null,
+
+                    ime:
+                        document.getElementById('imeLica')?.value || null,
+
+                    prezime:
+                        document.getElementById('prezimeLica')?.value || null,
+                  
+
+
+                    jmbg:
+                        document.getElementById('jmbgLica')?.value || null,
+
+                    nazivPravnogLica:
+                        document.getElementById('nazivPravnogLica')?.value || null,
+
+                    pib:
+                        document.getElementById('pibPravnogLica')?.value || null,
+
+                    adresa: {
+                        mesto:
+                            document.getElementById('mestoLica')?.value || null,
+
+                        ulica:
+                            document.getElementById('ulica')?.value || null,
+
+                        broj:
+                            document.getElementById('broj')?.value || null,
+
+                        sprat:
+                            document.getElementById('sprat')?.value || null,
+
+                        postanskiBroj:
+                            document.getElementById('postanskiBroj')?.value || null
+                    },
+
+                    telefon:
+                        document.getElementById('telefonLica')?.value || null
+                },
+
+            poreskiPodaci: {
+
+                datumNastanka:
+                    document.getElementById('datum_nastanka')?.value || null,
+
+                datumPrestanka:
+                    document.getElementById('datum_prestanka')?.value || null,
+
+                imaKredit:
+                    document.getElementById('poreski_kredit')?.checked || false,
+
+                imaOslobodjenje:
+                    document.getElementById('poresko_oslobodjenje')?.checked || false,
+
+                dokazi:
+                    document.getElementById('dokazi')?.value || null,
+
+                      kredit_osnov : document.getElementById('kredit_osnov')?.value || null,
+                    oslobodjenje_osnov : document.getElementById('oslobodjenje_osnov')?.value || null,
+                napomena:
+                    document.getElementById('napomenaDokument')?.value || null,
+
+                osnova:
+                    parseFloat(document.getElementById('osnova')?.value || 0),
+
+                udeo:
+                    parseFloat(document.getElementById('udeo')?.value || 0),
+
+               
+            },
+
+            objekti: izvuciObjekte()
+        };
+
+        const pregled = {
+
+            obveznik: DaLiJeKorisnikObaveznik
+                ? `Korisnik ID: ${korisnikID}`
+                : `Novi obveznik`,
+
+            podnosilac: DaLiJeKorisnikObaveznik
+                ? korisnikID
+                : (document.getElementById('nazivKorisnika')?.value || null),
+
+            vrstaPrava: {
+                id: isporuka.vrstaPravaId,
+                tekst:
+                    document.querySelector('#VrstaPravaId option:checked')
+                        ?.textContent
+                        ?.trim()
+            },
+
+            jls: {
+                id: isporuka.jlsId,
+                tekst:
+                    document.querySelector('#JlsId option:checked')
+                        ?.textContent
+                        ?.trim()
+            },
+
+            poreskiPrikaz: {
+
+                datumNastanka:
+                    isporuka.poreskiPodaci.datumNastanka || "Nije uneto",
+
+                datumPrestanka:
+                    isporuka.poreskiPodaci.datumPrestanka || "Nije uneto",
+
+                kredit:
+                    isporuka.poreskiPodaci.imaKredit
+                        ? "Ima poreski kredit"
+                        : "Nema poreski kredit",
+
+                oslobodjenjeStatus:
+                    isporuka.poreskiPodaci.imaOslobodjenje
+                        ? "Ima oslobođenje"
+                        : "Nema oslobođenje",
+
+                osnova:
+                    isporuka.poreskiPodaci.osnova,
+
+                udeo:
+                    `${isporuka.poreskiPodaci.udeo}%`,
+
+                umanjenje:
+                    isporuka.poreskiPodaci.oslobodjenje,
+
+                dokazi:
+                    isporuka.poreskiPodaci.dokazi || "Nema dokaza",
+
+                napomena:
+                    isporuka.poreskiPodaci.napomena || "Nema napomene"
+            },
+
+            objekti: isporuka.objekti.map(o => ({
+                lokacija: `${o.ulicaIbroj || ""}`,
+                povrsina: `${o.korisnaPovrsina} m²`,
+                godina: o.godinaIzgradnje,
+                udeo: `${o.udeoObveznika}%`
+            }))
+        };
+
+        return { isporuka, pregled };
+    }
+
+    function prikazi_rezultate() {
+
+        const data = ekstraktujPodatke();
+
+     
+
+        const pregled = data.pregled;
+
+        let objektiHtml = '';
+
+        if (pregled.objekti && pregled.objekti.length > 0) {
+
+            pregled.objekti.forEach((obj, idx) => {
+
+                objektiHtml += `
+                    <div class="d-flex justify-content-between align-items-center p-2 mb-2 bg-white border rounded">
+
+                        <div class="small text-truncate me-3">
+                            <span class="text-muted fw-bold me-2">
+                                #${idx + 1}
+                            </span>
+
+                            <span class="fw-semibold text-dark">
+                                ${obj.lokacija || 'Nije navedena adresa'}
+                            </span>
+
+                            <span class="text-muted ms-2">
+                                | ${obj.godina > 0
+                                    ? obj.godina + '. god.'
+                                    : 'Nije uneta godina'}
+                            </span>
+                        </div>
+
+                        <div class="flex-shrink-0">
+                            <span class="badge bg-dark text-white px-2 py-1 me-1">
+                                ${obj.povrsina}
+                            </span>
+
+                            <span class="badge bg-secondary text-white px-2 py-1">
+                                Udeo: ${obj.udeo}
+                            </span>
+                        </div>
+
+                    </div>
+                `;
+            });
+
+        } else {
+
+            objektiHtml = `
+                <div class="text-muted small p-2 bg-white border rounded">
+                    Nema evidentiranih objekata u ovoj prijavi.
+                </div>
+            `;
+        }
+
+        const htmlSadrzaj = `
+
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+
+                <h5 class="fw-bold text-dark mb-0">
+                    Izvučeni podaci poreske prijave
+                </h5>
+
+                <span class="badge bg-primary px-3 py-1.5 text-uppercase">
+                    Pregled
+                </span>
+
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <div class="p-3 bg-white border rounded h-100">
+
+                        <div class="text-uppercase text-muted fw-bold mb-2 small"
+                             style="font-size: 0.75rem; letter-spacing: 0.5px;">
+
+                            Podaci o prijavi
+
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Podnosilac:</strong>
+                            <span class="text-secondary">
+                                ${pregled.podnosilac || 'Nije uneto'}
+                            </span>
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Obveznik:</strong>
+                            <span class="text-secondary">
+                                ${pregled.obveznik}
+                            </span>
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Vrsta prava:</strong>
+                            <span class="text-secondary">
+                                ${pregled.vrstaPrava.tekst || 'Nije izabrano'}
+                            </span>
+                        </div>
+
+                        <div class="small">
+                            <strong>Lokalna samouprava (JLS):</strong>
+                            <span class="text-secondary">
+                                ${pregled.jls.tekst || 'Nije izabrano'}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <div class="p-3 bg-white border rounded h-100">
+
+                        <div class="text-uppercase text-muted fw-bold mb-2 small"
+                             style="font-size: 0.75rem; letter-spacing: 0.5px;">
+
+                            Poreski podaci
+
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Dan nastanka:</strong>
+                            <span class="text-secondary">
+                                ${pregled.poreskiPrikaz.datumNastanka}
+                            </span>
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Dan prestanka:</strong>
+                            <span class="text-secondary">
+                                ${pregled.poreskiPrikaz.datumPrestanka}
+                            </span>
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Poreska osnova:</strong>
+                            <span class="fw-bold text-dark">
+                                ${pregled.poreskiPrikaz.osnova.toLocaleString()}
+                            </span>
+                        </div>
+
+                        <div class="mb-1 small">
+                            <strong>Udeo obveznika:</strong>
+                            <span class="text-secondary">
+                                ${pregled.poreskiPrikaz.udeo}
+                            </span>
+                        </div>
+
+                        <div class="mb-2 small">
+                            <strong>Kredit / Oslobođenje:</strong>
+
+                            <span class="badge bg-light text-dark border ms-1">
+                                ${pregled.poreskiPrikaz.kredit}
+                            </span>
+
+                            <span class="badge bg-light text-dark border ms-1">
+                                ${pregled.poreskiPrikaz.oslobodjenjeStatus}
+                            </span>
+                        </div>
+
+                        <div class="mb-2 small">
+                            <strong>Dokazi:</strong>
+                            <span class="text-muted">
+                                ${pregled.poreskiPrikaz.dokazi}
+                            </span>
+                        </div>
+
+                        <div class="small">
+                            <strong>Napomena:</strong>
+                            <span class="text-muted">
+                                ${pregled.poreskiPrikaz.napomena}
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-12">
+
+                    <div class="text-uppercase text-muted fw-bold mb-2 mt-1 small"
+                         style="font-size: 0.75rem; letter-spacing: 0.5px;">
+
+                        Pripadajući objekti i nekretnine
+
+                    </div>
+
+                    ${objektiHtml}
+
+                </div>
+
+                <div class="col-12 d-flex justify-content-end mt-4 pt-2 border-top">
+
+                    <button type="button"
+                            class="btn btn-success px-4 fw-bold shadow-sm"
+                            onclick="potvrdiIZavrsiPrijavu()">
+
+                        Završi prijavu
+
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+        document.getElementById('prikazPodataka').innerHTML = htmlSadrzaj;
+    }
+
+    async function potvrdiIZavrsiPrijavu() {
+
+        const podaci = ekstraktujPodatke();
+
+        try {
+                const urlParams = new URLSearchParams(window.location.search);
+    const izmenaId = urlParams.get("izmenaId");
+    const endpoint = izmenaId
+    ? `http://localhost:5089/api/PoreskaPrijava/Izmeni?izmenaId=${izmenaId}`
+    : "http://localhost:5089/api/PoreskaPrijava";
+
+            const response = await fetch(
+                endpoint,
+                {
+                        method: izmenaId ? "PUT" : "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(podaci.isporuka)
+                }
+            );
+
+            if (!response.ok) {
+
+                const greska = await response.text();
+
+                console.error(greska);
+
+                alert("Greška prilikom slanja prijave.");
+
+                return;
+            }
+
+            const rezultat = await response.json();
+
+            alert("Prijava je uspešno poslata.");
+
+            console.log("Odgovor servera:", rezultat);
+
+        }
+        catch (err) {
+
+            console.error(err);
+
+            alert("Došlo je do greške pri komunikaciji sa serverom.");
+        }
+    }
+</script>
+

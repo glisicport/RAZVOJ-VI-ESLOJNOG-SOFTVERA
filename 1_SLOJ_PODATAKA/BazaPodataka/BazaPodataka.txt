@@ -1,0 +1,769 @@
+--SEMA
+GO
+USE master
+CREATE DATABASE PORESKO
+GO
+USE [PORESKO]
+GO
+/****** Object:  Table [dbo].[poreska_prijava]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[poreska_prijava](
+	[id] [uniqueidentifier] NOT NULL,
+	[obveznik_lice_id] [uniqueidentifier] NOT NULL,
+	[podnosilac_lice_id] [uniqueidentifier] NULL,
+	[je_izmenjena] [bit] NOT NULL,
+	[vrsta_prava_id] [smallint] NOT NULL,
+	[jls_id] [uniqueidentifier] NOT NULL,
+	[dan_nastanka_poreske_obaveze] [date] NULL,
+	[razlog_prestanka_id] [smallint] NULL,
+	[ima_poreski_kredit] [bit] NOT NULL,
+	[kredit_osnov] [nvarchar](max) NULL,
+	[ima_poresko_oslobodjenje] [bit] NOT NULL,
+	[oslobodjenje_osnov] [nvarchar](max) NULL,
+	[datum_podnosenja] [date] NULL,
+	[napomena] [nvarchar](max) NULL,
+	[kreirana_u] [datetime2](7) NOT NULL,
+	[azurirana_u] [datetime2](7) NOT NULL,
+	[popis_prilozenih_dokaza] [nvarchar](255) NULL,
+	[OrganizacionaJedinica] [nvarchar](255) NULL,
+	[poresko_umanjenje] [decimal](18, 0) NULL,
+	[dan_prestanka_poreske_obaveze] [date] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[nepokretnost]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[nepokretnost](
+	[id] [uniqueidentifier] NOT NULL,
+	[prijava_id] [uniqueidentifier] NOT NULL,
+	[vrsta_id] [smallint] NOT NULL,
+	[rbr] [smallint] NOT NULL,
+	[katastarska_opstina_id] [uniqueidentifier] NULL,
+	[adresa_id] [uniqueidentifier] NULL,
+	[br_kat_parcele] [nvarchar](50) NULL,
+	[godina_izgradnje] [smallint] NULL,
+	[korisna_povrsina] [decimal](12, 2) NULL,
+	[ukupna_povrsina] [decimal](12, 2) NULL,
+	[udeo_obveznika] [decimal](10, 4) NULL,
+	[ima_poreski_kredit] [bit] NOT NULL,
+	[ima_poresko_oslobodjenje] [bit] NOT NULL,
+	[oslobodjenje_osnov] [nvarchar](200) NULL,
+	[napomena] [nvarchar](max) NULL,
+	[UlicaIbroj] [nvarchar](255) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [uq_prijava_rbr] UNIQUE NONCLUSTERED 
+(
+	[prijava_id] ASC,
+	[rbr] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[vw_poreska_prijava_nepokretnosti]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[vw_poreska_prijava_nepokretnosti]
+AS
+SELECT 
+    pp.id,
+    pp.obveznik_lice_id,
+    pp.podnosilac_lice_id,
+    pp.je_izmenjena,
+    pp.vrsta_prava_id,
+    pp.jls_id,
+    pp.dan_nastanka_poreske_obaveze,
+    pp.razlog_prestanka_id,
+    pp.ima_poreski_kredit,
+    pp.kredit_osnov,
+    pp.ima_poresko_oslobodjenje,
+    pp.oslobodjenje_osnov,
+    pp.datum_podnosenja,
+    pp.napomena,
+    pp.kreirana_u,
+    pp.azurirana_u,
+    pp.popis_prilozenih_dokaza,
+    pp.OrganizacionaJedinica,
+
+    n.id AS nepokretnost_id,
+    n.prijava_id AS nepokretnost_prijava_id,
+    n.vrsta_id AS nepokretnost_vrsta_id,
+    n.rbr,
+    n.katastarska_opstina_id,
+    n.UlicaIbroj,
+    n.br_kat_parcele,
+    n.godina_izgradnje,
+    n.korisna_povrsina,
+    n.ukupna_povrsina,
+    n.udeo_obveznika,
+    n.ima_poreski_kredit AS nepok_ima_poreski_kredit,
+    n.ima_poresko_oslobodjenje AS nepok_ima_poresko_oslobodjenje,
+    n.oslobodjenje_osnov AS nepok_oslobodjenje_osnov,
+    n.napomena AS nepokretnost_napomena
+FROM poreska_prijava pp
+LEFT JOIN Nepokretnost n ON n.prijava_id = pp.id;
+GO
+/****** Object:  View [dbo].[vw_poreska_prijava_nepokretnosti_filt]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE VIEW [dbo].[vw_poreska_prijava_nepokretnosti_filt]
+AS
+SELECT 
+    pp.id,
+    pp.obveznik_lice_id,
+    pp.podnosilac_lice_id,
+    pp.je_izmenjena,
+    pp.vrsta_prava_id,
+    pp.jls_id,
+    pp.dan_nastanka_poreske_obaveze,
+    pp.razlog_prestanka_id,
+    pp.ima_poreski_kredit AS prijava_ima_poreski_kredit,
+    pp.kredit_osnov,
+    pp.ima_poresko_oslobodjenje AS prijava_ima_poresko_oslobodjenje,
+    pp.oslobodjenje_osnov,
+    pp.datum_podnosenja,
+    pp.napomena,
+    pp.kreirana_u,
+    pp.azurirana_u,
+    pp.popis_prilozenih_dokaza,
+    pp.OrganizacionaJedinica,
+
+    n.id AS nepokretnost_id,
+    n.prijava_id AS nepokretnost_prijava_id,
+    n.vrsta_id AS nepokretnost_vrsta_id,
+    n.rbr,
+    n.katastarska_opstina_id,
+    n.UlicaIbroj,
+    n.br_kat_parcele,
+    n.godina_izgradnje,
+    n.korisna_povrsina,
+    n.ukupna_povrsina,
+    n.udeo_obveznika,
+    n.ima_poreski_kredit AS nepok_ima_poreski_kredit,
+    n.ima_poresko_oslobodjenje AS nepok_ima_poresko_oslobodjenje,
+    n.oslobodjenje_osnov AS nepok_oslobodjenje_osnov,
+    n.napomena AS nepokretnost_napomena
+FROM poreska_prijava pp
+LEFT JOIN Nepokretnost n ON n.prijava_id = pp.id;
+GO
+/****** Object:  Table [dbo].[vrsta_prava]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[vrsta_prava](
+	[id] [smallint] NOT NULL,
+	[sifra] [varchar](4) NOT NULL,
+	[naziv] [nvarchar](200) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[sifra] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[jls]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[jls](
+	[id] [uniqueidentifier] NOT NULL,
+	[tip] [char](1) NOT NULL,
+	[naziv] [nvarchar](100) NOT NULL,
+	[sifra] [varchar](20) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[sifra] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[mesto]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[mesto](
+	[id] [uniqueidentifier] NOT NULL,
+	[naziv] [nvarchar](100) NOT NULL,
+	[ptt] [int] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[katastarska_opstina]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[katastarska_opstina](
+	[id] [uniqueidentifier] NOT NULL,
+	[jls_id] [uniqueidentifier] NOT NULL,
+	[naziv] [nvarchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [uq_ko] UNIQUE NONCLUSTERED 
+(
+	[jls_id] ASC,
+	[naziv] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[adresa]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[adresa](
+	[id] [uniqueidentifier] NOT NULL,
+	[mesto_id] [uniqueidentifier] NOT NULL,
+	[sprat] [nvarchar](20) NULL,
+	[stan] [nvarchar](20) NULL,
+	[ulicaIBroj] [nvarchar](255) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[lice]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[lice](
+	[id] [uniqueidentifier] NOT NULL,
+	[tip] [char](1) NOT NULL,
+	[ime] [nvarchar](100) NULL,
+	[prezime] [nvarchar](100) NULL,
+	[naziv] [nvarchar](200) NULL,
+	[jmbg] [varchar](13) NULL,
+	[pib] [varchar](9) NULL,
+	[MaticniBroj] [varchar](20) NULL,
+	[telefon] [nvarchar](30) NULL,
+	[AdresaId] [uniqueidentifier] NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[korisnik]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[korisnik](
+	[id] [uniqueidentifier] NOT NULL,
+	[LiceID] [uniqueidentifier] NULL,
+	[email] [nvarchar](255) NOT NULL,
+	[LozinkaHash] [nvarchar](255) NOT NULL,
+	[KreiranU] [datetime2](7) NOT NULL,
+	[Rola] [varchar](10) NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[LiceID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[email] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  View [dbo].[vw_poreska_prijava_detalji]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+
+CREATE VIEW [dbo].[vw_poreska_prijava_detalji] AS
+SELECT 
+    pp.id AS poreska_prijava_id,
+    l_obv.AdresaId,
+
+    -- OBVEZNIK
+    pp.obveznik_lice_id,
+    COALESCE(NULLIF(CONCAT(l_obv.ime, ' ', l_obv.prezime), ' '), l_obv.naziv) AS obveznik_lice_naziv,
+
+    l_obv.jmbg,
+    l_obv.pib,
+    l_obv.telefon,
+    korisnik.email,
+
+    -- ADRESA OBVEZNIKA
+    a.sprat AS obveznik_sprat,
+    a.stan AS obveznik_stan,
+    a.ulicaIBroj AS obveznik_ulica_broj,
+    m.naziv AS obveznik_mesto,
+    m.ptt AS obveznik_ptt,
+    
+
+    -- PODNOSILAC
+    pp.podnosilac_lice_id,
+    COALESCE(NULLIF(CONCAT(l_pod.ime, ' ', l_pod.prezime), ' '), l_pod.naziv) AS podnosilac_lice_naziv,
+
+    pp.je_izmenjena,
+    pp.vrsta_prava_id,
+    CONCAT(vp.sifra, ' - ', vp.naziv) AS vrsta_prava_naziv,
+    vp.sifra,
+    pp.jls_id,
+    jls.naziv AS jls_naziv,
+
+    pp.dan_nastanka_poreske_obaveze,
+    pp.dan_prestanka_poreske_obaveze,
+    pp.razlog_prestanka_id,
+
+
+    pp.ima_poreski_kredit AS pp_ima_poreski_kredit,
+    pp.kredit_osnov AS pp_kredit_osnov,
+
+    pp.ima_poresko_oslobodjenje AS pp_ima_poresko_oslobodjenje,
+    pp.oslobodjenje_osnov AS pp_oslobodjenje_osnov,
+
+    pp.datum_podnosenja,
+    pp.napomena AS pp_napomena,
+    pp.kreirana_u,
+    pp.azurirana_u,
+    pp.popis_prilozenih_dokaza,
+    pp.OrganizacionaJedinica,
+
+    -- NEPOKRETNOST
+    n.id AS nepokretnost_id,
+    n.prijava_id AS nepokretnost_prijava_id,
+    n.vrsta_id AS nepokretnost_vrsta_id,
+    n.rbr,
+
+    n.katastarska_opstina_id,
+    ko.naziv AS katastarska_opstina_naziv,
+
+    n.UlicaIbroj,
+    n.br_kat_parcele,
+    n.godina_izgradnje,
+    n.korisna_povrsina,
+    n.ukupna_povrsina,
+    n.udeo_obveznika,
+
+    n.ima_poreski_kredit AS n_ima_poreski_kredit,
+    n.ima_poresko_oslobodjenje AS n_ima_poresko_oslobodjenje,
+    n.oslobodjenje_osnov AS n_oslobodjenje_osnov,
+
+    n.napomena AS n_napomena
+
+FROM poreska_prijava pp
+
+LEFT JOIN Nepokretnost n 
+    ON n.prijava_id = pp.id
+
+LEFT JOIN Lice l_obv 
+    ON l_obv.id = pp.obveznik_lice_id
+
+LEFT JOIN Adresa a 
+    ON a.id = l_obv.AdresaId
+
+LEFT JOIN Mesto m 
+    ON m.id = a.mesto_id
+
+LEFT JOIN Lice l_pod 
+    ON l_pod.id = pp.podnosilac_lice_id
+
+LEFT JOIN vrsta_prava vp 
+    ON vp.id = pp.vrsta_prava_id
+
+LEFT JOIN jls 
+    ON jls.id = pp.jls_id
+LEFT JOIN korisnik  
+ON l_pod.id = korisnik.LiceID
+LEFT JOIN katastarska_opstina ko 
+    ON ko.id = n.katastarska_opstina_id;
+GO
+/****** Object:  View [dbo].[prijava_po_id]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE VIEW [dbo].[prijava_po_id] as
+SELECT 
+    pp.id,
+
+    pp.obveznik_lice_id,
+    COALESCE(NULLIF(CONCAT(l_obv.ime, ' ', l_obv.prezime), ' '), l_obv.naziv) AS obveznik_lice_naziv,
+
+    pp.podnosilac_lice_id,
+    COALESCE(NULLIF(CONCAT(l_pod.ime, ' ', l_pod.prezime), ' '), l_pod.naziv) AS podnosilac_lice_naziv,
+
+    pp.je_izmenjena,
+    pp.vrsta_prava_id,
+    CONCAT(vp.sifra, ' - ', vp.naziv) AS vrsta_prava_naziv,
+
+    pp.jls_id,
+    jls.naziv AS jls_naziv,
+    pp.dan_prestanka_poreske_obaveze,
+    pp.dan_nastanka_poreske_obaveze,
+    pp.razlog_prestanka_id,
+    pp.ima_poreski_kredit,
+    pp.kredit_osnov,
+    pp.ima_poresko_oslobodjenje,
+    pp.oslobodjenje_osnov,
+    pp.datum_podnosenja,
+    pp.napomena,
+    pp.kreirana_u,
+    pp.azurirana_u,
+    pp.popis_prilozenih_dokaza,
+    pp.OrganizacionaJedinica,
+
+    n.id AS nepokretnost_id,
+    n.prijava_id AS nepokretnost_prijava_id,
+    n.vrsta_id AS nepokretnost_vrsta_id,
+    n.rbr,
+    n.katastarska_opstina_id,
+    ko.naziv AS katastarska_opstina_naziv,
+
+    n.UlicaIbroj,
+    n.br_kat_parcele,
+    n.godina_izgradnje,
+    n.korisna_povrsina,
+    n.ukupna_povrsina,
+    n.udeo_obveznika,
+    n.ima_poreski_kredit as ima_poreski_kredit_objekat,
+    n.ima_poresko_oslobodjenje as ima_poresko_oslobodjenje_objekat,
+    n.oslobodjenje_osnov as oslobodjenje_osnov_objekat,
+    n.napomena AS nepokretnost_napomena
+
+FROM poreska_prijava pp
+
+LEFT JOIN Nepokretnost n 
+    ON n.prijava_id = pp.id
+
+LEFT JOIN Lice l_obv 
+    ON l_obv.id = pp.obveznik_lice_id
+
+LEFT JOIN Lice l_pod 
+    ON l_pod.id = pp.podnosilac_lice_id
+
+LEFT JOIN vrsta_prava vp 
+    ON vp.id = pp.vrsta_prava_id
+
+LEFT JOIN jls 
+    ON jls.id = pp.jls_id
+
+LEFT JOIN katastarska_opstina ko 
+    ON ko.id = n.katastarska_opstina_id
+GO
+/****** Object:  Table [dbo].[vrsta_nepokretnosti]    Script Date: 6/1/2026 7:25:56 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[vrsta_nepokretnosti](
+	[id] [smallint] NOT NULL,
+	[sifra] [varchar](4) NOT NULL,
+	[naziv] [nvarchar](100) NOT NULL,
+PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+UNIQUE NONCLUSTERED 
+(
+	[sifra] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[adresa] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[jls] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[katastarska_opstina] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[korisnik] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[korisnik] ADD  DEFAULT (sysdatetime()) FOR [KreiranU]
+GO
+ALTER TABLE [dbo].[lice] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[mesto] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[nepokretnost] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[nepokretnost] ADD  DEFAULT ((0)) FOR [ima_poreski_kredit]
+GO
+ALTER TABLE [dbo].[nepokretnost] ADD  DEFAULT ((0)) FOR [ima_poresko_oslobodjenje]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT (newid()) FOR [id]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT ((0)) FOR [je_izmenjena]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT ((0)) FOR [ima_poreski_kredit]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT ((0)) FOR [ima_poresko_oslobodjenje]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT (sysdatetime()) FOR [kreirana_u]
+GO
+ALTER TABLE [dbo].[poreska_prijava] ADD  DEFAULT (sysdatetime()) FOR [azurirana_u]
+GO
+ALTER TABLE [dbo].[adresa]  WITH CHECK ADD  CONSTRAINT [fk_adresa_naselje] FOREIGN KEY([mesto_id])
+REFERENCES [dbo].[mesto] ([id])
+GO
+ALTER TABLE [dbo].[adresa] CHECK CONSTRAINT [fk_adresa_naselje]
+GO
+ALTER TABLE [dbo].[katastarska_opstina]  WITH CHECK ADD  CONSTRAINT [fk_ko_jls] FOREIGN KEY([jls_id])
+REFERENCES [dbo].[jls] ([id])
+GO
+ALTER TABLE [dbo].[katastarska_opstina] CHECK CONSTRAINT [fk_ko_jls]
+GO
+ALTER TABLE [dbo].[korisnik]  WITH CHECK ADD  CONSTRAINT [fk_korisnik_lice] FOREIGN KEY([LiceID])
+REFERENCES [dbo].[lice] ([id])
+GO
+ALTER TABLE [dbo].[korisnik] CHECK CONSTRAINT [fk_korisnik_lice]
+GO
+ALTER TABLE [dbo].[lice]  WITH CHECK ADD  CONSTRAINT [fk_lice_adresa] FOREIGN KEY([AdresaId])
+REFERENCES [dbo].[adresa] ([id])
+GO
+ALTER TABLE [dbo].[lice] CHECK CONSTRAINT [fk_lice_adresa]
+GO
+ALTER TABLE [dbo].[nepokretnost]  WITH CHECK ADD  CONSTRAINT [fk_nepokretnost_adresa] FOREIGN KEY([adresa_id])
+REFERENCES [dbo].[adresa] ([id])
+GO
+ALTER TABLE [dbo].[nepokretnost] CHECK CONSTRAINT [fk_nepokretnost_adresa]
+GO
+ALTER TABLE [dbo].[nepokretnost]  WITH CHECK ADD  CONSTRAINT [fk_nepokretnost_ko] FOREIGN KEY([katastarska_opstina_id])
+REFERENCES [dbo].[katastarska_opstina] ([id])
+GO
+ALTER TABLE [dbo].[nepokretnost] CHECK CONSTRAINT [fk_nepokretnost_ko]
+GO
+ALTER TABLE [dbo].[nepokretnost]  WITH CHECK ADD  CONSTRAINT [fk_nepokretnost_prijava] FOREIGN KEY([prijava_id])
+REFERENCES [dbo].[poreska_prijava] ([id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[nepokretnost] CHECK CONSTRAINT [fk_nepokretnost_prijava]
+GO
+ALTER TABLE [dbo].[nepokretnost]  WITH CHECK ADD  CONSTRAINT [fk_nepokretnost_vrsta] FOREIGN KEY([vrsta_id])
+REFERENCES [dbo].[vrsta_nepokretnosti] ([id])
+GO
+ALTER TABLE [dbo].[nepokretnost] CHECK CONSTRAINT [fk_nepokretnost_vrsta]
+GO
+ALTER TABLE [dbo].[poreska_prijava]  WITH CHECK ADD  CONSTRAINT [fk_prijava_jls] FOREIGN KEY([jls_id])
+REFERENCES [dbo].[jls] ([id])
+GO
+ALTER TABLE [dbo].[poreska_prijava] CHECK CONSTRAINT [fk_prijava_jls]
+GO
+ALTER TABLE [dbo].[poreska_prijava]  WITH CHECK ADD  CONSTRAINT [fk_prijava_obveznik] FOREIGN KEY([obveznik_lice_id])
+REFERENCES [dbo].[lice] ([id])
+GO
+ALTER TABLE [dbo].[poreska_prijava] CHECK CONSTRAINT [fk_prijava_obveznik]
+GO
+ALTER TABLE [dbo].[poreska_prijava]  WITH CHECK ADD  CONSTRAINT [fk_prijava_podnosilac] FOREIGN KEY([podnosilac_lice_id])
+REFERENCES [dbo].[lice] ([id])
+GO
+ALTER TABLE [dbo].[poreska_prijava] CHECK CONSTRAINT [fk_prijava_podnosilac]
+GO
+ALTER TABLE [dbo].[poreska_prijava]  WITH CHECK ADD  CONSTRAINT [fk_prijava_vrsta_prava] FOREIGN KEY([vrsta_prava_id])
+REFERENCES [dbo].[vrsta_prava] ([id])
+GO
+ALTER TABLE [dbo].[poreska_prijava] CHECK CONSTRAINT [fk_prijava_vrsta_prava]
+GO
+ALTER TABLE [dbo].[jls]  WITH CHECK ADD CHECK  (([tip]='O' OR [tip]='G'))
+GO
+ALTER TABLE [dbo].[lice]  WITH CHECK ADD CHECK  (([tip]='P' OR [tip]='F'))
+GO
+
+--- DDL
+USE [PORESKO]
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (1, N'3.1', N'Gradevinsko zemljište')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (2, N'3.2', N'Poljoprivredno zemljište')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (3, N'3.3', N'Šumsko zemljište')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (4, N'3.4', N'Drugo zemljište')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (5, N'3.5', N'Stan')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (6, N'3.6', N'Kuca za stanovanje')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (7, N'3.7', N'Poslovna zgrada')
+GO
+INSERT [dbo].[vrsta_nepokretnosti] ([id], [sifra], [naziv]) VALUES (8, N'3.8', N'Garaža / pomocni objekat')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'13979c04-36db-4fa5-b9e8-00dd147c187f', N'G', N'Beograd', N'001')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'1fab6901-a2bc-454d-a975-1780a3f288a5', N'O', N'Sombor', N'205')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'8a029777-5d67-4199-b649-327cb8056b6d', N'G', N'Kraljevo', N'005')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'79196e6d-0529-4676-a904-44b3b54b5fd7', N'O', N'Subotica', N'204')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'a084b6dc-1032-4002-bc72-5aa6a41c516b', N'O', N'Becej', N'201')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'1ce06a88-d291-4c24-8088-5bb217097c7d', N'O', N'Zrenjanin', N'203')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'5d5eaa77-244c-40e0-93d6-7d578e2ad29e', N'G', N'Kragujevac', N'004')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'G', N'Novi Sad', N'002')
+GO
+INSERT [dbo].[jls] ([id], [tip], [naziv], [sifra]) VALUES (N'f7e26add-7eb4-4a79-b1aa-ae3ccf5dc284', N'G', N'Niš', N'003')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'0baa0e52-2067-4b2e-b740-68202b2300c3', N'13979c04-36db-4fa5-b9e8-00dd147c187f', N'Palilula (Beograd)')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'351e3e28-6b19-4d33-a0a6-b6104ffdf7a0', N'13979c04-36db-4fa5-b9e8-00dd147c187f', N'Stari Grad')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'47917ee0-42b0-4a97-8599-66e7833214d9', N'13979c04-36db-4fa5-b9e8-00dd147c187f', N'Vracar')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'8cde3a3c-525e-4455-8539-ceb646592a02', N'13979c04-36db-4fa5-b9e8-00dd147c187f', N'Zvezdara')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'c12e9054-ee13-406c-bd28-cbd3e164cc41', N'1fab6901-a2bc-454d-a975-1780a3f288a5', N'Bezdan')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'82674ab8-8a09-4526-aba3-17945cd5c759', N'1fab6901-a2bc-454d-a975-1780a3f288a5', N'Sombor')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'ecabae40-ec51-4bcd-b05d-853c9b56d0b8', N'8a029777-5d67-4199-b649-327cb8056b6d', N'Kraljevo')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'f5a4a901-c4dc-4621-bf79-87ad989b23f2', N'79196e6d-0529-4676-a904-44b3b54b5fd7', N'Kelebija')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'c478407b-0bc4-4919-b6f5-3c9ed1274f29', N'79196e6d-0529-4676-a904-44b3b54b5fd7', N'Palic')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'ba58c84a-21ef-4546-b41b-683c5f51856d', N'79196e6d-0529-4676-a904-44b3b54b5fd7', N'Subotica')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'44fc8b5b-b789-4e40-b953-55ae416b6a5e', N'a084b6dc-1032-4002-bc72-5aa6a41c516b', N'Becej')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'5c110efd-1afb-41c7-b98a-625be2ac977b', N'1ce06a88-d291-4c24-8088-5bb217097c7d', N'Zrenjanin')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'f892b559-2484-4e19-b293-83932bd07b7c', N'5d5eaa77-244c-40e0-93d6-7d578e2ad29e', N'Kragujevac')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'9eacd4c6-5850-4396-bbf2-0e13998d833d', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Futog')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'5c6c8e49-7874-4b45-b7d9-3bf77548e06a', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Kac')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'2ef2b249-d646-4452-b598-c24b85df62f2', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Kisac')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'98a1166b-514a-474f-ae33-d2dd99d6379e', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Petrovaradin')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'84cf84f0-bdf5-473c-a413-3633356d7607', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Rumenka')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'2cda8e5c-3ae9-4936-ac97-7d2b76ee8d01', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Sremska Kamenica')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'b9a5a019-baba-4d0b-b1f7-461be8b98c72', N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', N'Veternik')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'69eb9293-dd61-4fe3-b18e-3e3037d91c7f', N'f7e26add-7eb4-4a79-b1aa-ae3ccf5dc284', N'Medijana')
+GO
+INSERT [dbo].[katastarska_opstina] ([id], [jls_id], [naziv]) VALUES (N'173212af-b3b1-48f0-bb3e-9baa4908b1ab', N'f7e26add-7eb4-4a79-b1aa-ae3ccf5dc284', N'Pantelej')
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'81c7998a-1572-498e-b92f-0aca54a6fcb5', N'Užice', 31000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'2ecb1e44-0974-4e59-97ab-194da8c87c28', N'Pancevo', 26000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'8bab243c-874b-4df8-b3eb-29f7dc123fe8', N'Sombor', 25000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'00055602-df8e-4e85-960c-2da71c77d766', N'Novi Pazar', 36300)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'e049fca2-acc4-4eab-90aa-3141adacbbd4', N'Vranje', 17500)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'15245cee-82f6-4e87-ae65-34654e1c65ec', N'Kragujevac', 34000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'982d11a4-b5ac-4e44-9258-3952b3469aaf', N'Novi Sad', 21000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'afdb2a97-0ad6-4b32-9aeb-3b1a7a938bfd', N'Loznica', 15300)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'2c2b8eb2-64b8-41d0-99cd-3b4f8e726724', N'Beograd', 11000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'c4b1e7e7-48a6-4c4e-b47b-3e1f125f9b06', N'Cacak', 32000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'9cfbd8b7-d362-46a0-99ce-6a3b5a7252a2', N'Niš', 18000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'293e678c-22ea-49ca-91c9-74ce4240cfd5', N'Subotica', 24000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'49b405b1-78c8-48fb-98bb-8095f55d5e8f', N'Pirot', 18300)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'10567366-4843-45f4-ae8b-9a864defd7c2', N'Leskovac', 16000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'ba65fbb3-54bd-46ad-ac82-a716aecc7a24', N'Valjevo', 14000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'22803150-3350-4c62-830c-a84dc3583d66', N'Zajecar', 19000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'da5ecc67-a4f5-4596-ac6b-be73b9b333d4', N'Kraljevo', 36000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'cf36e5ed-8b02-4599-bd18-c76e6f2b3106', N'Zrenjanin', 23000)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'50abacef-9179-4186-ac82-ca9d47164db0', N'a2', 12)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'ba76d81a-7285-4172-a8d2-cdc83fe2dfac', N'Smederevo', 11300)
+GO
+INSERT [dbo].[mesto] ([id], [naziv], [ptt]) VALUES (N'6150d2b1-163a-44e1-b93e-e96762476a35', N'Šabac', 15000)
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'2d0f773b-96cc-4a13-a401-592311c2420b', N'10567366-4843-45f4-ae8b-9a864defd7c2', NULL, N'2', N'Glisic')
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'c1f9c750-367d-419c-a813-65f4bf88ffe9', N'e049fca2-acc4-4eab-90aa-3141adacbbd4', NULL, N'1', N'Petra Kocica 164')
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'93a8e976-aa4c-4561-b81b-bc086cf394a2', N'15245cee-82f6-4e87-ae65-34654e1c65ec', NULL, N'231', N'Petra Kociac 164')
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'bed9275d-1ea9-4c4b-9aa9-e171bd43ccfe', N'00055602-df8e-4e85-960c-2da71c77d766', NULL, N'1', N'Petra Kocica 164')
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'3133bb96-0b46-48a7-8ccf-e6cc320c1d44', N'8bab243c-874b-4df8-b3eb-29f7dc123fe8', NULL, N'123', N'123')
+GO
+INSERT [dbo].[adresa] ([id], [mesto_id], [sprat], [stan], [ulicaIBroj]) VALUES (N'f5d6c42f-cfc2-4a1d-bc56-fd45e7c12a7a', N'e049fca2-acc4-4eab-90aa-3141adacbbd4', NULL, N'44', N'Petra Kocica 164')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (1, N'2.1', N'Imalac prava svojine, odnosno prava svojine na zemljištu površine preko 10 ari')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (2, N'2.2', N'Fizicko lice – imalac prava zakupa (neprofitne zakupnine) ili prava korišcenja, za period > 1 god.')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (3, N'2.3', N'Imalac prava korišcenja gradevinskog zemljišta površine preko 10 ari')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (4, N'2.4', N'Držalac nepokretnosti na kojoj imalac prava svojine nije poznat ili nije odreden')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (5, N'2.5', N'Držalac nepokretnosti u javnoj svojini bez pravnog osnova')
+GO
+INSERT [dbo].[vrsta_prava] ([id], [sifra], [naziv]) VALUES (6, N'2.6', N'Primalac finansijskog lizinga')
+GO
+INSERT [dbo].[lice] ([id], [tip], [ime], [prezime], [naziv], [jmbg], [pib], [MaticniBroj], [telefon], [AdresaId]) VALUES (N'0f3a77b4-3507-42ad-9b25-23f35527fd77', N'P', NULL, NULL, N'Firma', NULL, N'12345678', NULL, N'+3213', N'93a8e976-aa4c-4561-b81b-bc086cf394a2')
+GO
+INSERT [dbo].[lice] ([id], [tip], [ime], [prezime], [naziv], [jmbg], [pib], [MaticniBroj], [telefon], [AdresaId]) VALUES (N'1a530703-f15b-48f2-981f-31ccdf52d2ba', N'F', N'Luka1', N'Glisic', NULL, N'1231231231231', NULL, NULL, N'+31231', N'c1f9c750-367d-419c-a813-65f4bf88ffe9')
+GO
+INSERT [dbo].[poreska_prijava] ([id], [obveznik_lice_id], [podnosilac_lice_id], [je_izmenjena], [vrsta_prava_id], [jls_id], [dan_nastanka_poreske_obaveze], [razlog_prestanka_id], [ima_poreski_kredit], [kredit_osnov], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [datum_podnosenja], [napomena], [kreirana_u], [azurirana_u], [popis_prilozenih_dokaza], [OrganizacionaJedinica], [poresko_umanjenje], [dan_prestanka_poreske_obaveze]) VALUES (N'fccff59d-a217-4484-ad29-139c54941d14', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', 0, 3, N'00652b20-a610-4b39-a06b-9e8f7f6f2aa8', CAST(N'2026-06-24' AS Date), NULL, 0, NULL, 0, NULL, CAST(N'2026-06-01' AS Date), NULL, CAST(N'2026-06-01T17:50:50.4600000' AS DateTime2), CAST(N'2026-06-01T17:50:50.4600000' AS DateTime2), NULL, N'1', CAST(0 AS Decimal(18, 0)), NULL)
+GO
+INSERT [dbo].[poreska_prijava] ([id], [obveznik_lice_id], [podnosilac_lice_id], [je_izmenjena], [vrsta_prava_id], [jls_id], [dan_nastanka_poreske_obaveze], [razlog_prestanka_id], [ima_poreski_kredit], [kredit_osnov], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [datum_podnosenja], [napomena], [kreirana_u], [azurirana_u], [popis_prilozenih_dokaza], [OrganizacionaJedinica], [poresko_umanjenje], [dan_prestanka_poreske_obaveze]) VALUES (N'7c12a582-070d-4a9f-9817-7549b22cfb48', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', 1, 2, N'1ce06a88-d291-4c24-8088-5bb217097c7d', CAST(N'2026-05-20' AS Date), NULL, 1, N'4.00', 0, NULL, CAST(N'2026-05-31' AS Date), N'NAPOMENA', CAST(N'2026-05-31T12:48:12.8100000' AS DateTime2), CAST(N'2026-06-01T17:52:40.3733333' AS DateTime2), N'DOKAZI', N'ORGANIZACIJA', CAST(45 AS Decimal(18, 0)), NULL)
+GO
+INSERT [dbo].[poreska_prijava] ([id], [obveznik_lice_id], [podnosilac_lice_id], [je_izmenjena], [vrsta_prava_id], [jls_id], [dan_nastanka_poreske_obaveze], [razlog_prestanka_id], [ima_poreski_kredit], [kredit_osnov], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [datum_podnosenja], [napomena], [kreirana_u], [azurirana_u], [popis_prilozenih_dokaza], [OrganizacionaJedinica], [poresko_umanjenje], [dan_prestanka_poreske_obaveze]) VALUES (N'ea25f298-da6f-472d-b85d-c4050b8b09cc', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', 0, 5, N'1ce06a88-d291-4c24-8088-5bb217097c7d', CAST(N'2026-05-27' AS Date), NULL, 0, NULL, 0, NULL, CAST(N'2026-05-31' AS Date), NULL, CAST(N'2026-05-31T12:57:38.2533333' AS DateTime2), CAST(N'2026-05-31T12:57:38.2533333' AS DateTime2), NULL, N'f', CAST(0 AS Decimal(18, 0)), NULL)
+GO
+INSERT [dbo].[nepokretnost] ([id], [prijava_id], [vrsta_id], [rbr], [katastarska_opstina_id], [adresa_id], [br_kat_parcele], [godina_izgradnje], [korisna_povrsina], [ukupna_povrsina], [udeo_obveznika], [ima_poreski_kredit], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [napomena], [UlicaIbroj]) VALUES (N'31693ec3-7c8a-45b6-9b72-673e050678cf', N'7c12a582-070d-4a9f-9817-7549b22cfb48', 2, 2, N'5c6c8e49-7874-4b45-b7d9-3bf77548e06a', NULL, N'213/1', 1999, CAST(120.00 AS Decimal(12, 2)), CAST(140.00 AS Decimal(12, 2)), CAST(5.0000 AS Decimal(10, 4)), 1, 0, NULL, N'NAPOMENA', N'Marka Markovica 123')
+GO
+INSERT [dbo].[nepokretnost] ([id], [prijava_id], [vrsta_id], [rbr], [katastarska_opstina_id], [adresa_id], [br_kat_parcele], [godina_izgradnje], [korisna_povrsina], [ukupna_povrsina], [udeo_obveznika], [ima_poreski_kredit], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [napomena], [UlicaIbroj]) VALUES (N'a10e58f1-b1df-48da-9eaf-7e40646203b6', N'fccff59d-a217-4484-ad29-139c54941d14', 3, 1, N'351e3e28-6b19-4d33-a0a6-b6104ffdf7a0', NULL, N'1/1', 1, CAST(12.00 AS Decimal(12, 2)), CAST(14.00 AS Decimal(12, 2)), CAST(1.0000 AS Decimal(10, 4)), 0, 1, NULL, N'11', N'ff 1')
+GO
+INSERT [dbo].[nepokretnost] ([id], [prijava_id], [vrsta_id], [rbr], [katastarska_opstina_id], [adresa_id], [br_kat_parcele], [godina_izgradnje], [korisna_povrsina], [ukupna_povrsina], [udeo_obveznika], [ima_poreski_kredit], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [napomena], [UlicaIbroj]) VALUES (N'fb382daf-07fd-4133-8499-b540a58efb46', N'7c12a582-070d-4a9f-9817-7549b22cfb48', 2, 1, N'8cde3a3c-525e-4455-8539-ceb646592a02', NULL, N'1/1', 1999, CAST(124.00 AS Decimal(12, 2)), CAST(244.00 AS Decimal(12, 2)), CAST(1.0000 AS Decimal(10, 4)), 1, 1, NULL, N'f', N'Petra Kocica 164')
+GO
+INSERT [dbo].[nepokretnost] ([id], [prijava_id], [vrsta_id], [rbr], [katastarska_opstina_id], [adresa_id], [br_kat_parcele], [godina_izgradnje], [korisna_povrsina], [ukupna_povrsina], [udeo_obveznika], [ima_poreski_kredit], [ima_poresko_oslobodjenje], [oslobodjenje_osnov], [napomena], [UlicaIbroj]) VALUES (N'535f5207-b5f6-4dd3-8aea-d49b108d1521', N'ea25f298-da6f-472d-b85d-c4050b8b09cc', 4, 1, N'c12e9054-ee13-406c-bd28-cbd3e164cc41', NULL, N'f', 3, CAST(3.00 AS Decimal(12, 2)), CAST(3.00 AS Decimal(12, 2)), CAST(4.0000 AS Decimal(10, 4)), 0, 0, NULL, N'f', N'f')
+GO
+INSERT [dbo].[korisnik] ([id], [LiceID], [email], [LozinkaHash], [KreiranU], [Rola]) VALUES (N'beb59134-62d3-4f81-a8e4-829fb0712711', N'0f3a77b4-3507-42ad-9b25-23f35527fd77', N'firma@gmail.com', N'AQAAAAIAAYagAAAAEFWU+HC6YOrg50bQ3paFq5Yjc5tevrr8qefcbPFU+GKbv7zrXC1XGQCF28zaw/265w==', CAST(N'2026-05-31T00:43:17.4920461' AS DateTime2), N'korisnik')
+GO
+INSERT [dbo].[korisnik] ([id], [LiceID], [email], [LozinkaHash], [KreiranU], [Rola]) VALUES (N'c8482db4-3b47-4b12-9cb6-e5100a2295a7', N'1a530703-f15b-48f2-981f-31ccdf52d2ba', N'luka@gmail.com', N'AQAAAAIAAYagAAAAENGjgaAR4AA5m8kAWxsB6DCE1Z9ONWzg8LPExae1/J5N5Civz/44bUL+j6qpmDhw3w==', CAST(N'2026-05-31T00:44:39.4196229' AS DateTime2), N'admin')
+GO

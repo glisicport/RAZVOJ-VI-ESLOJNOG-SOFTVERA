@@ -1,0 +1,369 @@
+﻿@model List<BibliotekaKlasa.KlasePodataka.ApiPozivi.PoreskaPrijavaOdziv>
+
+@{
+    ViewData["Title"] = "Pregled prijava";
+
+    var pretraga = Context.Request.Query["pretraga"].ToString();
+    var jlsFilter = Context.Request.Query["jls"].ToString();
+    var obveznikFilter = Context.Request.Query["obveznik"].ToString();
+    var vrstaPravaFilter = Context.Request.Query["vrstaPrava"].ToString();
+    var samoIzmenjene = Context.Request.Query["samoIzmenjene"].ToString();
+
+    var selectedIndex = 0;
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning">
+        Nema podataka za prikaz.
+    </div>
+}
+else
+{
+    <div class="container-fluid py-4">
+        <div class="row g-3">
+
+            <!-- FILTERI -->
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <form method="get" asp-controller="PoreskaPrijava" asp-action="Pregled" class="row g-2 align-items-end">
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">Pretraga</label>
+                                <input type="text" name="pretraga" value="@pretraga" class="form-control" placeholder="ID, naziv, napomena..." />
+                            </div>
+
+                            <div class="col-12 col-md-3">
+                                <label class="form-label">JLS</label>
+                                <input type="text" name="jls" value="@jlsFilter" class="form-control" placeholder="Naziv JLS" />
+                            </div>
+
+                            <div class="col-12 col-md-2">
+                                <label class="form-label">Vrsta prava</label>
+                                <input type="text" name="vrstaPrava" value="@vrstaPravaFilter" class="form-control" placeholder="Naziv vrste" />
+                            </div>
+
+                            <div class="col-12 col-md-1 d-grid">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="samoIzmenjene" value="true" @(samoIzmenjene == "true" ? "checked" : "") />
+                                    <label class="form-check-label">Izm.</label>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Filtriraj</button>
+                            </div>
+
+                            <div class="col-12 col-md-3 d-grid">
+                                <label class="form-label">&nbsp;</label>
+                                <a class="btn btn-dark"
+                                   href="@Url.Action("Pregled", "PoreskaPrijava", new
+                                   {
+                                       pretraga,
+                                       jls = jlsFilter,
+                                       obveznik = obveznikFilter,
+                                       vrstaPrava = vrstaPravaFilter,
+                                       samoIzmenjene,
+                                       stampa = 'l'
+                                   })">
+                                    Stampaj sve
+                                </a>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LEVA STRANA -->
+            <div class="col-lg-4 col-xl-3">
+                <div class="card shadow-sm border-0 sticky-top" style="top: 1rem;">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">Prijave</span>
+                        <span class="badge text-bg-primary">@Model.Count</span>
+                    </div>
+
+                    <div class="list-group list-group-flush overflow-auto" id="listaPrijava" style="max-height: calc(100vh - 11rem);">
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            var p = Model[i];
+                            var isActive = i == selectedIndex;
+                            var nepokretnostiCount = p.Nepokretnosti?.Count ?? 0;
+
+                            <button type="button"
+                                    class="stavka-prijave list-group-item list-group-item-action @(isActive ? "aktivna" : "")"
+                                    data-cilj="detalj-@i">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div class="text-start">
+                                        <div class="fw-semibold text-truncate" style="max-width: 220px;">
+                                            @(p.ObveznikLiceNaziv ?? "-")
+                                        </div>
+                                        <div class="small opacity-75 text-truncate" style="max-width: 220px;">
+                                            @p.VrstaPravaNaziv
+                                        </div>
+                                        <div class="small opacity-75 text-truncate" style="max-width: 220px;">
+                                            @(string.IsNullOrWhiteSpace(p.ObveznikUlicaBroj) ? "-" : p.ObveznikUlicaBroj)
+                                            @(string.IsNullOrWhiteSpace(p.ObveznikMesto) ? "" : ", " + p.ObveznikMesto)
+                                            @(p.ObveznikPtt.HasValue ? " " + p.ObveznikPtt.Value.ToString() : "")
+                                        </div>
+                                    </div>
+
+                                    <span class="badge rounded-pill @(isActive ? "text-bg-light" : "text-bg-secondary")">
+                                        @nepokretnostiCount
+                                    </span>
+                                </div>
+
+                                <div class="mt-2 small">
+                                    <div class="text-truncate">
+                                        <strong>JLS:</strong> @(p.JlsNaziv ?? "-")
+                                    </div>
+                                    <div>
+                                        <strong>Podnosenje:</strong> @(p.DatumPodnosenja?.ToString("dd.MM.yyyy") ?? "-")
+                                    </div>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- DESNA STRANA -->
+            <div class="col-lg-8 col-xl-9">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="fw-semibold">Detalji prijave</span>
+                        <span class="text-muted small">Klikni na prijavu sa leve strane</span>
+                    </div>
+
+                    <div class="card-body">
+
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            var p = Model[i];
+                            var isActive = i == selectedIndex;
+
+                            <div class="prijava-detalj @(isActive ? "" : "d-none")" id="detalj-@i">
+
+                                <div class="d-flex flex-wrap gap-2 mb-4">
+                                    <form asp-controller="PoreskaPrijava" asp-action="Index" method="get">
+                                        <input type="hidden" name="izmenaId" value="@p.PoreskaPrijavaId" />
+                                        <button type="submit" class="btn btn-primary shadow-sm">
+                                            Izmeni
+                                        </button>
+                                    </form>
+
+                                    <form asp-controller="PoreskaPrijava" asp-action="Obrisi" method="post" onsubmit="return confirm('Brisanje prijave?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="poreska_prijava_id" value="@p.PoreskaPrijavaId" />
+                                        <button type="submit" class="btn btn-outline-danger shadow-sm">
+                                            Obrisi
+                                        </button>
+                                    </form>
+
+                                    <a class="btn btn-sm btn-outline-dark"
+                                       href="@Url.Action("Pregled", "PoreskaPrijava", new
+                                       {
+                                           pretraga,
+                                           jls = jlsFilter,
+                                           obveznik = obveznikFilter,
+                                           vrstaPrava = vrstaPravaFilter,
+                                           samoIzmenjene,
+                                           id = p.PoreskaPrijavaId,
+                                           stampa = 'j'
+                                       })">
+                                        Stampaj dokument
+                                    </a>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-lg-6">
+                                        <div class="card border-0 bg-light h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-naslov mb-3">Osnovni podaci</h6>
+
+                                                <div class="mb-1"><strong>Prijava:</strong> @p.PoreskaPrijavaId</div>
+                                                <div class="mb-1"><strong>Obveznik:</strong> @(p.ObveznikLiceNaziv ?? "-")</div>
+                                                <div class="mb-1"><strong>Podnosilac:</strong> @(p.PodnosilacLiceNaziv ?? "-")</div>
+                                                <div class="mb-1"><strong>Vrsta prava:</strong> @(p.VrstaPravaNaziv ?? "-")</div>
+                                                <div class="mb-1"><strong>JLS:</strong> @(p.JlsNaziv ?? "-")</div>
+                                                <div class="mb-1"><strong>Organizaciona jedinica:</strong> @(p.OrganizacionaJedinica ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="card border-0 bg-light h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-naslov mb-3">Podaci o obvezniku</h6>
+
+                                                <div class="mb-1"><strong>Ime / naziv:</strong> @(p.ObveznikLiceNaziv ?? "-")</div>
+                                                <div class="mb-1"><strong>Ulica i broj:</strong> @(p.ObveznikUlicaBroj ?? "-")</div>
+                                                <div class="mb-1"><strong>Sprat:</strong> @(p.ObveznikSprat ?? "-")</div>
+                                                <div class="mb-1"><strong>Stan:</strong> @(p.ObveznikStan ?? "-")</div>
+                                                <div class="mb-1"><strong>Mesto:</strong> @(p.ObveznikMesto ?? "-")</div>
+                                                <div class="mb-1"><strong>PTT:</strong> @(p.ObveznikPtt?.ToString() ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="card border-0 bg-light h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-naslov mb-3">Status i datumi</h6>
+
+                                                <div class="mb-1"><strong>Dan nastanka:</strong> @(p.DanNastankaPoreskeObaveze?.ToString("dd.MM.yyyy") ?? "-")</div>
+                                                <div class="mb-1"><strong>Datum podnosenja:</strong> @(p.DatumPodnosenja?.ToString("dd.MM.yyyy") ?? "-")</div>
+                                                <div class="mb-1"><strong>Kredit:</strong> @(p.PpImaPoreskiKredit ? "Da" : "Ne")</div>
+                                                <div class="mb-1"><strong>Oslobodjenje:</strong> @(p.PpImaPoreskoOslobodjenje ? "Da" : "Ne")</div>
+                                                <div class="mb-1"><strong>Dokazi:</strong> @(p.PopisPrilozenihDokaza ?? "-")</div>
+                                                <div class="mb-1"><strong>Napomena:</strong> @(p.PpNapomena ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="card border-0 bg-light h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-naslov mb-3">Obveznik adresa</h6>
+
+                                                <div class="mb-1"><strong>Ulica i broj:</strong> @(p.ObveznikUlicaBroj ?? "-")</div>
+                                                <div class="mb-1"><strong>Sprat:</strong> @(p.ObveznikSprat ?? "-")</div>
+                                                <div class="mb-1"><strong>Stan:</strong> @(p.ObveznikStan ?? "-")</div>
+                                                <div class="mb-1"><strong>Mesto:</strong> @(p.ObveznikMesto ?? "-")</div>
+                                                <div class="mb-1"><strong>PTT:</strong> @(p.ObveznikPtt?.ToString() ?? "-")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">Nepokretnosti</h5>
+                                        <span class="badge text-bg-secondary">@((p.Nepokretnosti?.Count) ?? 0)</span>
+                                    </div>
+
+                                    @if (p.Nepokretnosti != null && p.Nepokretnosti.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-sm align-middle">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Rbr</th>
+                                                        <th>Vrsta</th>
+                                                        <th>Katastarska opstina</th>
+                                                        <th>Parcela</th>
+                                                        <th>Adresa</th>
+                                                        <th>Godina</th>
+                                                        <th>Korisna</th>
+                                                        <th>Ukupna</th>
+                                                        <th>Udeo</th>
+                                                        <th>Kredit</th>
+                                                        <th>Oslobodjenje</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var n in p.Nepokretnosti.OrderBy(x => x.Rbr))
+                                                    {
+                                                        <tr>
+                                                            <td>@(n.Rbr?.ToString() ?? "-")</td>
+                                                            <td>@(n.VrstaId?.ToString() ?? "-")</td>
+                                                            <td>@(n.KatastarskaOpstinaNaziv ?? "-")</td>
+                                                            <td>@(n.BrKatParcele ?? "-")</td>
+                                                            <td>@(n.UlicaIbroj ?? "-")</td>
+                                                            <td>@(n.GodinaIzgradnje?.ToString() ?? "-")</td>
+                                                            <td>@(n.KorisnaPovrsina?.ToString() ?? "-")</td>
+                                                            <td>@(n.UkupnaPovrsina?.ToString() ?? "-")</td>
+                                                            <td>@(n.UdeoObveznika?.ToString() ?? "-")</td>
+                                                            <td>@(n.ImaPoreskiKredit == true ? "Da" : "Ne")</td>
+                                                            <td>@(n.ImaPoreskoOslobodjenje == true ? "Da" : "Ne")</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-info mb-0">
+                                            Nema nepokretnosti.
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+<style>
+    .stavka-prijave {
+        border-left: 0;
+        border-right: 0;
+        border-radius: 0 !important;
+        padding: 1rem;
+        transition: background-color .15s ease, color .15s ease, transform .15s ease;
+    }
+
+        .stavka-prijave:hover {
+            transform: translateX(1px);
+        }
+
+        .stavka-prijave.aktivna {
+            background: #0d6efd;
+            color: #fff;
+            border-color: rgba(255,255,255,.15);
+        }
+
+            .stavka-prijave.aktivna .text-muted,
+            .stavka-prijave.aktivna .opacity-75 {
+                color: rgba(255,255,255,.8) !important;
+            }
+
+    .prijava-detalj {
+        animation: fadeIn .15s ease-in-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const stavkePrijava = document.querySelectorAll(".stavka-prijave");
+        const detaljiPrijava = document.querySelectorAll(".prijava-detalj");
+
+        stavkePrijava.forEach(function (stavka) {
+            stavka.addEventListener("click", function () {
+                const ciljId = this.getAttribute("data-cilj");
+
+                stavkePrijava.forEach(function (x) {
+                    x.classList.remove("aktivna");
+                });
+
+                detaljiPrijava.forEach(function (x) {
+                    x.classList.add("d-none");
+                });
+
+                this.classList.add("aktivna");
+
+                const detalj = document.getElementById(ciljId);
+                if (detalj) {
+                    detalj.classList.remove("d-none");
+                }
+            });
+        });
+    });
+</script>

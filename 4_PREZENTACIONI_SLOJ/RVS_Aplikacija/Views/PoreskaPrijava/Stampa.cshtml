@@ -1,0 +1,163 @@
+﻿@model List<BibliotekaKlasa.KlasePodataka.ApiPozivi.PoreskaPrijavaOdziv>
+
+@{
+    Layout = null;
+}
+
+
+<style>
+    body {
+        background: #fff;
+    }
+
+
+    .stampa-dokument {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    @@media print {
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            background: #fff;
+        }
+    }
+</style>
+
+<div class="stampa-dokument">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+        <h4 class="m-0">Štampa poreskih prijava</h4>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary btn-sm" onclick="window.print()">Štampaj</button>
+            <button class="btn btn-secondary btn-sm" onclick="window.close()">Zatvori</button>
+        </div>
+    </div>
+
+    @foreach (var p in Model)
+    {
+        <div class="card mb-4 border">
+
+            <div class="card-body">
+
+                <h6 class="fw-bold border-bottom pb-2 mb-3">Osnovni podaci</h6>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Prijava ID</div>
+                    <div class="col-8">@p.PoreskaPrijavaId</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Obveznik</div>
+                    <div class="col-8">@(p.ObveznikLiceNaziv ?? "-")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Podnosilac</div>
+                    <div class="col-8">@(p.PodnosilacLiceNaziv ?? "-")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Vrsta prava</div>
+                    <div class="col-8">@(p.VrstaPravaNaziv ?? "-")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">JLS</div>
+                    <div class="col-8">@(p.JlsNaziv ?? "-")</div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-4 fw-semibold">Organizaciona jedinica</div>
+                    <div class="col-8">@(p.OrganizacionaJedinica ?? "-")</div>
+                </div>
+
+                <h6 class="fw-bold border-bottom pb-2 mb-3">Status</h6>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Datum podnošenja</div>
+                    <div class="col-8">@(p.DatumPodnosenja?.ToString("dd.MM.yyyy") ?? "-")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Dan nastanka obaveze</div>
+                    <div class="col-8">@(p.DanNastankaPoreskeObaveze?.ToString("dd.MM.yyyy") ?? "-")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Kredit</div>
+                    <div class="col-8">@(p.PpImaPoreskiKredit ? "Da" : "Ne")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Oslobođenje</div>
+                    <div class="col-8">@(p.PpImaPoreskoOslobodjenje ? "Da" : "Ne")</div>
+                </div>
+
+                <div class="row mb-1">
+                    <div class="col-4 fw-semibold">Napomena</div>
+                    <div class="col-8">@(p.PpNapomena ?? "-")</div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-4 fw-semibold">Dokazi</div>
+                    <div class="col-8">@(p.PopisPrilozenihDokaza ?? "-")</div>
+                </div>
+
+                <h6 class="fw-bold border-bottom pb-2 mb-3">Nepokretnosti</h6>
+
+                @if (p.Nepokretnosti != null && p.Nepokretnosti.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Rbr</th>
+                                    <th>Vrsta</th>
+                                    <th>Opština</th>
+                                    <th>Parcela</th>
+                                    <th>Adresa</th>
+                                    <th>Godina</th>
+                                    <th>Korisna</th>
+                                    <th>Ukupna</th>
+                                    <th>Udeo</th>
+                                    <th>Kredit</th>
+                                    <th>Oslobođenje</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var n in p.Nepokretnosti.OrderBy(x => x.Rbr))
+                                {
+                                    <tr>
+                                        <td>@(n.Rbr?.ToString() ?? "-")</td>
+                                        <td>@(n.VrstaId?.ToString() ?? "-")</td>
+                                        <td>@(n.KatastarskaOpstinaNaziv ?? "-")</td>
+                                        <td>@(n.BrKatParcele ?? "-")</td>
+                                        <td>@(n.UlicaIbroj ?? "-")</td>
+                                        <td>@(n.GodinaIzgradnje?.ToString() ?? "-")</td>
+                                        <td>@(n.KorisnaPovrsina?.ToString() ?? "-")</td>
+                                        <td>@(n.UkupnaPovrsina?.ToString() ?? "-")</td>
+                                        <td>@(n.UdeoObveznika?.ToString() ?? "-")</td>
+                                        <td>@(n.ImaPoreskiKredit == true ? "Da" : "Ne")</td>
+                                        <td>@(n.ImaPoreskoOslobodjenje == true ? "Da" : "Ne")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">Nema nepokretnosti</div>
+                }
+
+            </div>
+        </div>
+    }
+</div>

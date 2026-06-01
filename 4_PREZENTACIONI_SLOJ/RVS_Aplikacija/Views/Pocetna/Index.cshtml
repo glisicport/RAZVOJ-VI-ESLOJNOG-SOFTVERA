@@ -1,0 +1,84 @@
+﻿@{
+    ViewData["Title"] = "Početna stranica";
+}
+
+<div class="container py-5">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+            <div class="p-4 p-md-5 bg-light rounded-4 shadow-sm">
+                <span class="badge bg-primary mb-3">Poreska prijava za utvrđivanje poreza na imovinu</span>
+                <h1 class="display-5 fw-bold mb-3">Dobro došli u sistem za podnošenje poreske prijave</h1>
+                <p class="lead text-muted mb-4">
+                    Ovaj sistem omogućava unos podataka o obvezniku, nepokretnostima, pratećoj dokumentaciji i slanje prijave u elektronskoj formi.
+                </p>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="/Korisnik/Registracija" class="btn btn-primary btn-lg">Registracija</a>
+                    <a href="/Korisnik/Prijava" class="btn btn-outline-primary btn-lg">Prijava na sistem</a>
+                    <a href="/PoreskaPrijava/Nova" class="btn btn-success btn-lg">Nova prijava</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="card-naslov mb-3">Šta možete da uradite</h4>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Registracija korisnika
+                            <span class="badge bg-success">1</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Unos ličnih podataka
+                            <span class="badge bg-success">2</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Dodavanje nepokretnosti
+                            <span class="badge bg-success">3</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            Pregled i slanje prijave
+                            <span class="badge bg-success">4</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5 g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="card-naslov">1. Registracija</h5>
+                    <p class="card-text text-muted">
+                        Korisnik kreira nalog putem email adrese i lozinke, a zatim unosi osnovne lične podatke.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="card-naslov">2. Unos prijave</h5>
+                    <p class="card-text text-muted">
+                        Popunjava se prijava sa podacima o obvezniku, vrsti prava i nepokretnostima koje ulaze u obračun.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm border-0 rounded-4">
+                <div class="card-body p-4">
+                    <h5 class="card-naslov">3. Evidencija i pregled</h5>
+                    <p class="card-text text-muted">
+                        Prijava se čuva u sistemu, može se pregledati, izmeniti i pripremiti za podnošenje.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,103 @@
+﻿@model RVS_Aplikacija.ViewModels.PoreskaPrijavaViewModel
+<div class="step-content" data-step="2">
+
+    <div class="section-box mb-3">
+        <div class="section-naslov">Datumi poreske obaveze</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Dan nastanka poreske obaveze <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" id="datum_nastanka" required>
+                <div class="invalid-feedback">Obavezno polje</div>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Dan prestanka poreske obaveze</label>
+                <input type="date" class="form-control" id="datum_prestanka">
+                <div class="invalid-feedback">Datum prestanka ne može biti pre datuma nastanka</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-box mb-3">
+        <div class="section-naslov">Poreske olakšice</div>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="poreski_kredit">
+                    <label class="form-check-label" for="poreski_kredit">Poreski kredit</label>
+                </div>
+                <div class="mt-2">
+                    <input type="number" class="form-control" id="kredit_osnov" placeholder="Kredit osnov" min="0" step="0.01" disabled>
+                    <div class="invalid-feedback">Vrednost mora biti veća ili jednaka 0</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="poresko_oslobodjenje">
+                    <label class="form-check-label" for="poresko_oslobodjenje">Poresko oslobođenje</label>
+                </div>
+                <div class="mt-2">
+                    <input type="number" class="form-control" id="oslobodjenje_osnov" placeholder="Oslobođenje osnov" min="0" step="0.01" disabled>
+                    <div class="invalid-feedback">Vrednost mora biti veća ili jednaka 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-box mb-3">
+        <div class="section-naslov">Dokazi</div>
+        <textarea class="form-control" id="dokazi" rows="3" maxlength="1000" placeholder="Unesite dokaze"></textarea>
+    </div>
+
+    <div class="section-box">
+        <div class="section-naslov">Napomena</div>
+        <textarea class="form-control" id="napomenaDokument" rows="3" maxlength="500" placeholder="Dodatne informacije"></textarea>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const toggleFields = (checkId, inputId) => {
+            const check = document.getElementById(checkId);
+            const input = document.getElementById(inputId);
+            check.addEventListener('change', () => {
+                input.disabled = !check.checked;
+                if (!check.checked) input.value = ''; 
+            });
+        };
+
+        toggleFields('poreski_kredit', 'kredit_osnov');
+        toggleFields('poresko_oslobodjenje', 'oslobodjenje_osnov');
+
+        window.validacioneFunkcije = window.validacioneFunkcije || {};
+        window.validacioneFunkcije[1] = function () {
+            let ok = true;
+
+            const datumNastanka = document.getElementById("datum_nastanka");
+            const datumPrestanka = document.getElementById("datum_prestanka");
+            const kreditCheck = document.getElementById("poreski_kredit");
+            const kreditOsnov = document.getElementById("kredit_osnov");
+            const oslobodjenjeCheck = document.getElementById("poresko_oslobodjenje");
+            const oslobodjenjeOsnov = document.getElementById("oslobodjenje_osnov");
+
+            [datumNastanka, datumPrestanka, kreditOsnov, oslobodjenjeOsnov].forEach(el => el.classList.remove("is-invalid"));
+
+            if (!datumNastanka.value) { datumNastanka.classList.add("is-invalid"); ok = false; }
+
+            if (datumPrestanka.value && datumNastanka.value && new Date(datumPrestanka.value) < new Date(datumNastanka.value)) {
+                datumPrestanka.classList.add("is-invalid"); ok = false;
+            }
+
+            if (kreditCheck.checked) {
+                const val = parseFloat(kreditOsnov.value);
+                if (isNaN(val) || val < 0) { kreditOsnov.classList.add("is-invalid"); ok = false; }
+            }
+
+            if (oslobodjenjeCheck.checked) {
+                const val = parseFloat(oslobodjenjeOsnov.value);
+                if (isNaN(val) || val < 0) { oslobodjenjeOsnov.classList.add("is-invalid"); ok = false; }
+            }
+
+            return ok;
+        };
+    });
+</script>
